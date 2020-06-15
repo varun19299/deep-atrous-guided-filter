@@ -28,6 +28,17 @@ def base_config():
         run_dir = Path("runs")  # Runs saved to run_dir / exp_name
         test_image_dir = None
 
+    if system == "FPM":
+        image_dir = Path("/media/salman/udc/")
+        output_dir = Path("output") / exp_name
+        ckpt_dir = Path(
+            "/media/salman/udc/ckpts"
+        )  # Checkpoints saved to ckpt_dir / exp_name
+        run_dir = Path(
+            "/media/salman/udc/runs"
+        )  # Runs saved to run_dir / exp_name
+        test_image_dir = None
+
     # ---------------------------------------------------------------------------- #
     # Data
     # ---------------------------------------------------------------------------- #
@@ -49,7 +60,7 @@ def base_config():
     image_height = 1024
     image_width = 2048
 
-    batch_size = 8
+    batch_size = 6
     num_threads = batch_size  # parallel workers
 
     # ---------------------------------------------------------------------------- #
@@ -148,7 +159,25 @@ def ours_pixelshuffle():
     pixelshuffle_ratio = 2
 
 
-named_configs = [ours_pixelshuffle]
+def hdrnet():
+    exp_name = "hdrnet"
+
+    model = "hdrnet-fft"  # We wont use fft though
+
+
+def guided_filter():
+    exp_name = "guided-filter"
+
+    model = "guided-filter"  # We wont use fft though
+
+
+def guided_filter_l1():
+    exp_name = "guided-filter-l1"
+
+    model = "guided-filter"  # We wont use fft though
+
+
+named_configs = [ours_pixelshuffle, hdrnet, guided_filter, guided_filter_l1]
 
 
 def initialise(ex):

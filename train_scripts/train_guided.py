@@ -64,6 +64,8 @@ def main(_run):
     G, _, D = get_model.model(
         args
     )  # , source_device=source_device, target_device=device)
+
+    G.init_lr("ckpts/lr_net_latest.pth")
     G = G.to(device)
     D = D.to(source_device)
 
@@ -240,7 +242,7 @@ def main(_run):
                 if i % (args.log_interval) == 0:
                     n = np.min([3, args.batch_size])
                     for e in range(n):
-                        source_vis = source[e].mul(0.5).add(0.5)
+                        source_vis = source[e]
 
                         writer.add_image(
                             f"Source/Train_{e+1}",
@@ -252,8 +254,8 @@ def main(_run):
                             f"Filename/Train_{e+1}", filename[e], global_step
                         )
 
-                        target_vis = target[e].mul(0.5).add(0.5)
-                        output_vis = output[e].mul(0.5).add(0.5)
+                        target_vis = target[e]
+                        output_vis = output[e]
 
                         writer.add_image(
                             f"Target/Train_{e+1}",
@@ -350,10 +352,10 @@ def main(_run):
                     n = np.min([3, args.batch_size])
                     for e in range(n):
                         source_vis = torch.zeros_like(source[e])[:3]
-                        source_vis = source_vis.mul(0.5).add(0.5)
+                        source_vis = source_vis
 
-                        target_vis = target[e].mul(0.5).add(0.5)
-                        output_vis = output[e].mul(0.5).add(0.5)
+                        target_vis = target[e]
+                        output_vis = output[e]
 
                         writer.add_image(
                             f"Source/Val_{e+1}", source_vis.cpu().detach(), global_step
@@ -371,9 +373,9 @@ def main(_run):
 
                     for e, filename in enumerate(filename_static):
                         if filename == args.static_val_image:
-                            source_vis = source_static[e].mul(0.5).add(0.5)
-                            target_vis = target_static[e].mul(0.5).add(0.5)
-                            output_vis = output_static[e].mul(0.5).add(0.5)
+                            source_vis = source_static[e]
+                            target_vis = target_static[e]
+                            output_vis = output_static[e]
 
                             writer.add_image(
                                 f"Source/Val_Static",
@@ -450,8 +452,8 @@ def main(_run):
 
                     n = np.min([3, args.batch_size])
                     for e in range(n):
-                        source_vis = source[e].mul(0.5).add(0.5)
-                        output_vis = output[e].mul(0.5).add(0.5)
+                        source_vis = source[e]
+                        output_vis = output[e]
 
                         writer.add_image(
                             f"Source/Test_{e+1}", source_vis.cpu().detach(), global_step
@@ -467,8 +469,8 @@ def main(_run):
 
                     for e, filename in enumerate(filename_static):
                         if filename == args.static_test_image:
-                            source_vis = source_static[e].mul(0.5).add(0.5)
-                            output_vis = output_static[e].mul(0.5).add(0.5)
+                            source_vis = source_static[e]
+                            output_vis = output_static[e]
 
                             writer.add_image(
                                 f"Source/Test_Static",

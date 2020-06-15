@@ -10,6 +10,8 @@ from models.hdrnet import HDRNet
 
 from models.Discriminator import Discriminator
 
+from models.guided_filtering_net import DeepGuidedFilterGuidedMapConvGF
+
 
 def model(args, source_device=None, target_device=None):
     if args.model == "unet-fft":
@@ -27,6 +29,18 @@ def model(args, source_device=None, target_device=None):
     elif args.model == "hdrnet-fft":
         return (
             HDRNet(),
+            FFTLayer(args),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "guided-filter":
+        return (
+            DeepGuidedFilterGuidedMapConvGF(),
             FFTLayer(args),
             Discriminator(
                 args,

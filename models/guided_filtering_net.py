@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+from torch.nn import functional as F
 from torch.nn import init
 
 from models.guided_filter import FastGuidedFilter, ConvGuidedFilter
@@ -111,7 +111,7 @@ class DeepGuidedFilterConvGF(nn.Module):
         self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
 
     def forward(self, x_lr, x_hr):
-        return self.gf(x_lr, self.lr(x_lr), x_hr).clamp(0, 1)
+        return F.tanh(self.gf(x_lr, self.lr(x_lr), x_hr))
 
     def init_lr(self, path):
         self.lr.load_state_dict(torch.load(path))
@@ -136,9 +136,9 @@ class DeepGuidedFilterGuidedMapConvGF(DeepGuidedFilterConvGF):
 
     def forward(self, x_hr):
         x_lr = self.downsample(x_hr)
-        return self.gf(
-            self.guided_map(x_lr), self.lr(x_lr), self.guided_map(x_hr)
-        ).clamp(0, 1)
+        return F.tanh(
+            self.gf(self.guided_map(x_lr), self.lr(x_lr), self.guided_map(x_hr))
+        )
 
 
 if __name__ == "__main__":

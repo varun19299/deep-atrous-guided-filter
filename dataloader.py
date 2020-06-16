@@ -104,11 +104,11 @@ class OLEDDataset(Dataset):
             source = np.load(source_path) / 255.0
 
         source = torch.tensor(source).float().permute(2, 0, 1)
-        # source = (source - 0.5) * 2
+        source = (source - 0.5) * 2
 
         if self.mode in ["train", "val"]:
             target = torch.tensor(target).float().permute(2, 0, 1)
-            # target = (target - 0.5) * 2
+            target = (target - 0.5) * 2
 
             return (source, target, source_path.name)
 

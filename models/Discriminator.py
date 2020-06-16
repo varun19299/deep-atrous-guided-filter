@@ -54,11 +54,11 @@ class Discriminator(nn.Module):
         self.disc = nn.Sequential(
             spectral_normaliser(nn.Conv2d(3, 64, kernel_size=3, padding=1)),
             nn.LeakyReLU(0.2),
-            spectral_normaliser(nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)),
-            normaliser(128),
+            spectral_normaliser(nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1)),
+            normaliser(64),
             nn.LeakyReLU(0.2),
             nn.AdaptiveAvgPool2d(1),
-            spectral_normaliser(nn.Conv2d(128, 1, kernel_size=1)),
+            spectral_normaliser(nn.Conv2d(64, 1, kernel_size=1)),
         )
 
         self.source_device = source_device
@@ -73,6 +73,9 @@ class Discriminator(nn.Module):
             img = img.to(self.source_device)
 
         x = self.disc(img)
+
+        if self.target_device:
+            x = x.to(self.target_device)
         return x.squeeze()
 
 

@@ -1,24 +1,7 @@
-"""
-Train Script for Unet
-
-@MOD: 8th April 2019
-
-@py3.6+
-
-@requirements: See utils/requirments.txt
-"""
 # Libraries
 from utils.model_serialization import load_state_dict
-
-try:
-    from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-except ImportError:
-    from torch_utils.lr_scheduler import CosineAnnealingWarmRestarts
-
-try:
-    from torch.optim.adamw import AdamW
-except ImportError:
-    from torch_utils.adamw import AdamW
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from torch.optim.adamw import AdamW
 
 # Torch Libs
 import torch
@@ -71,7 +54,7 @@ def set_device(args: "tupperware"):
 
 
 def get_optimisers(
-    G: "nn.Module", FFT: "nn.Module", D: "nn.Module", args: "tupperware"
+    G: "nn.Module", D: "nn.Module", args: "tupperware"
 ) -> "Tuple[optim, optim, lr_scheduler, lr_scheduler]":
 
     if G:
@@ -80,14 +63,7 @@ def get_optimisers(
         )
     else:
         g_optimizer = None
-    if FFT:
-        fft_optimizer = AdamW(
-            FFT.parameters(),
-            lr=args.fft_learning_rate,
-            betas=(args.beta_1, args.beta_2),
-        )
-    else:
-        fft_optimizer = None
+
     if D:
         d_optimizer = AdamW(
             D.parameters(), lr=args.learning_rate, betas=(args.beta_1, args.beta_2)
@@ -102,13 +78,6 @@ def get_optimisers(
             )
         else:
             g_lr_scheduler = None
-
-        if fft_optimizer:
-            fft_lr_scheduler = CosineAnnealingWarmRestarts(
-                optimizer=fft_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-7
-            )
-        else:
-            fft_lr_scheduler = None
 
         if d_optimizer:
             d_lr_scheduler = CosineAnnealingWarmRestarts(
@@ -125,13 +94,6 @@ def get_optimisers(
         else:
             g_lr_scheduler = None
 
-        if fft_optimizer:
-            fft_lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer=fft_optimizer, step_size=args.step_size, gamma=0.1
-            )
-        else:
-            fft_lr_scheduler = None
-
         if d_optimizer:
             d_lr_scheduler = torch.optim.lr_scheduler.StepLR(
                 optimizer=d_optimizer, step_size=args.step_size, gamma=0.1
@@ -139,36 +101,27 @@ def get_optimisers(
         else:
             d_lr_scheduler = None
 
-    return (
-        (g_optimizer, fft_optimizer, d_optimizer),
-        (g_lr_scheduler, fft_lr_scheduler, d_lr_scheduler),
-    )
+    return ((g_optimizer, d_optimizer), (g_lr_scheduler, d_lr_scheduler))
 
 
 def load_models(
     G: "nn.Module" = None,
-    FFT: "nn.Module" = None,
     D: "nn.Module" = None,
     g_optimizer: "optim" = None,
-    fft_optimizer: "optim" = None,
     d_optimizer: "optim" = None,
     args: "tupperware" = None,
     tag: str = "latest",
 ) -> "Tuple[List[nn.module], List[optim], int, int, int]":
 
-    names = ["Gen", "FFT", "Disc"]
+    names = ["Gen", "Disc"]
 
     latest_paths = [
         (args.ckpt_dir / args.exp_name / i).resolve()
-        for i in [
-            args.save_filename_latest_G,
-            args.save_filename_latest_FFT,
-            args.save_filename_latest_D,
-        ]
+        for i in [args.save_filename_latest_G, args.save_filename_latest_D]
     ]
     best_paths = [
         (args.ckpt_dir / args.exp_name / i).resolve()
-        for i in [args.save_filename_G, args.save_filename_FFT, args.save_filename_D]
+        for i in [args.save_filename_G, args.save_filename_D]
     ]
 
     if tag == "latest":
@@ -183,8 +136,8 @@ def load_models(
             paths = latest_paths
             tag = "latest"
 
-    models = [G, FFT, D]
-    optimizers = [g_optimizer, fft_optimizer, d_optimizer]
+    models = [G, D]
+    optimizers = [g_optimizer, d_optimizer]
 
     # Defaults
     start_epoch = 0
@@ -238,10 +191,8 @@ def save_weights(
     global_step: int,
     epoch: int,
     G: "nn.Module" = None,
-    FFT: "nn.Module" = None,
     D: "nn.Module" = None,
     g_optimizer: "optim" = None,
-    fft_optimizer: "optim" = None,
     d_optimizer: "optim" = None,
     loss: "float" = None,
     is_min: bool = True,
@@ -252,7 +203,7 @@ def save_weights(
         logging.info(f"Epoch {epoch + 1} saving weights")
 
         # Systems for which Epoch 10 saving allowed
-        is_sys_allowed = args.system in ["CFI", "Jarvis"]
+        is_sys_allowed = args.system in ["CFI", "Jarvis", "FPM"]
 
         if G:
             # Gen
@@ -271,35 +222,15 @@ def save_weights(
             torch.save(G_state, path_G)
 
             # Specific saving
-            if epoch % 10 == 0 and tag == "latest" and is_sys_allowed:
+            if (
+                epoch % args.save_copy_every_epochs == 0
+                and tag == "latest"
+                and is_sys_allowed
+            ):
                 save_filename_G = f"Epoch_{epoch}_{save_filename_G}"
 
             path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
             torch.save(G_state, path_G)
-
-        if FFT:
-            # FFT
-            FFT_state = {
-                "global_step": global_step,
-                "epoch": epoch + 1,
-                "state_dict": FFT.state_dict(),
-                "optimizer": fft_optimizer.state_dict(),
-                "loss": loss,
-            }
-            save_filename_FFT = (
-                args.save_filename_latest_FFT
-                if tag == "latest"
-                else args.save_filename_FFT
-            )
-
-            path_FFT = str(args.ckpt_dir / args.exp_name / save_filename_FFT)
-            torch.save(FFT_state, path_FFT)
-
-            if epoch % 10 == 0 and tag == "latest" and is_sys_allowed:
-                save_filename_FFT = f"Epoch_{epoch}_{save_filename_FFT}"
-
-            path_FFT = str(args.ckpt_dir / args.exp_name / save_filename_FFT)
-            torch.save(FFT_state, path_FFT)
 
         if D:
             # Disc
@@ -316,7 +247,11 @@ def save_weights(
             path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
             torch.save(D_state, path_D)
 
-            if epoch % 10 == 0 and tag == "latest" and is_sys_allowed:
+            if (
+                epoch % args.save_copy_every_epochs == 0
+                and tag == "latest"
+                and is_sys_allowed
+            ):
                 save_filename_D = f"Epoch_{epoch}_{save_filename_D}"
 
             path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)

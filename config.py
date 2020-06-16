@@ -14,30 +14,35 @@ import torch
 def base_config():
     exp_name = "ours"
     system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun", "CapSys"]
+    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
 
     # ---------------------------------------------------------------------------- #
     # Directories
     # ---------------------------------------------------------------------------- #
 
-    test_glob_pattern = "*.png"
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
         output_dir = Path("output") / exp_name
         ckpt_dir = Path("ckpts")  # Checkpoints saved to ckpt_dir / exp_name
         run_dir = Path("runs")  # Runs saved to run_dir / exp_name
-        test_image_dir = None
 
-    if system == "FPM":
+    elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
         output_dir = Path("output") / exp_name
         ckpt_dir = Path(
             "/media/salman/udc/ckpts"
         )  # Checkpoints saved to ckpt_dir / exp_name
+        run_dir = Path("/media/salman/udc/runs")  # Runs saved to run_dir / exp_name
+
+    elif system == "FPM":
+        image_dir = Path("/media/data/salman/udc/")
+        output_dir = Path("output") / exp_name
+        ckpt_dir = Path(
+            "/media/data/salman/udc/ckpts"
+        )  # Checkpoints saved to ckpt_dir / exp_name
         run_dir = Path(
-            "/media/salman/udc/runs"
+            "/media/data/salman/udc/runs"
         )  # Runs saved to run_dir / exp_name
-        test_image_dir = None
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -51,29 +56,25 @@ def base_config():
 
     test_source_dir = image_dir / "Poled_val" / "LQ"
 
-    # PSF
-    wiener_mat = Path("data/poled_wiener_R.npy")
-
     static_val_image = "1.npy"
     static_test_image = "1.npy"
 
     image_height = 1024
     image_width = 2048
 
-    batch_size = 6
+    batch_size = 8
     num_threads = batch_size  # parallel workers
 
     # ---------------------------------------------------------------------------- #
     # Train Configs
     # ---------------------------------------------------------------------------- #
     # Schedules
-    fft_epochs = 0
-    pretrain_epochs = 500
-    num_epochs = 500
+    num_epochs = 512 - 1
 
     learning_rate = 3e-4
-    fft_learning_rate = 4e-10
-    # Betas for AdamW. We follow https://arxiv.org/pdf/1704.00028
+
+    # Betas for AdamW.
+    # We follow https://arxiv.org/pdf/1704.00028
     beta_1 = 0.9  # momentum
     beta_2 = 0.999
 
@@ -88,23 +89,27 @@ def base_config():
 
     # saving models
     save_filename_G = "model.pth"
-    save_filename_FFT = "FFT.pth"
     save_filename_D = "D.pth"
 
     save_filename_latest_G = "model_latest.pth"
-    save_filename_latest_FFT = "FFT_latest.pth"
     save_filename_latest_D = "D_latest.pth"
 
-    log_interval = 20  # the number of iterations (default: 10) to print at
+    # save a copy of weights every x epochs
+    save_copy_every_epochs = 10
+
+    # the number of iterations (default: 10) to print at
+    log_interval = 20
+
+    # run val or test only every x epochs
+    val_test_epoch_interval = 5
 
     # ---------------------------------------------------------------------------- #
-    # Model
+    # Model: See models/get_model.py for registry
     # ---------------------------------------------------------------------------- #
-    # See models/get_model.py for registry
-    model = "hdrnet-fft"
+
+    model = "guided-filter"
 
     use_spectral_norm = False
-    pixelshuffle_ratio = 1  # Used for train_pixel_shuffle
 
     gan_type = "NSGAN"  # or RAGAN
     assert gan_type in ["NSGAN", "RAGAN"]
@@ -117,15 +122,9 @@ def base_config():
     # ---------------------------------------------------------------------------- #
     # Loss
     # ---------------------------------------------------------------------------- #
-    lambda_adversarial = 0.6
-    lambda_contextual = 0.0
-    lambda_perception = 1.2  # 0.006
-    lambda_image = 1  # mse
-    lambda_lpips = 0.0
-    lambda_ssim = 0.0
-    lambda_sobel = 0.0
-    lambda_forward = 0.0
-    lambda_interm = 0.0
+    lambda_adversarial = 0.0
+    lambda_perception = 0.0
+    lambda_image = 1  # l1
 
     resume = True
     finetune = False  # Wont load loss or epochs
@@ -146,23 +145,10 @@ def base_config():
     device_list = None
 
 
-"""
-9th March 2020
-Instead of 1518 x 2012, 1280 x 1408, no psf pad
-"""
-
-
-def ours_pixelshuffle():
-    exp_name = "ours_pixelshuffle"
-
-    model = "unet-pixelshuffle-fft"
-    pixelshuffle_ratio = 2
-
-
 def hdrnet():
     exp_name = "hdrnet"
 
-    model = "hdrnet-fft"  # We wont use fft though
+    model = "hdrnet"  # We wont use fft though
 
 
 def guided_filter():
@@ -177,7 +163,37 @@ def guided_filter_l1():
     model = "guided-filter"  # We wont use fft though
 
 
-named_configs = [ours_pixelshuffle, hdrnet, guided_filter, guided_filter_l1]
+def guided_filter_l1_tanh():
+    exp_name = "guided-filter-l1-tanh"
+
+    model = "guided-filter"  # We wont use fft though
+
+
+def guided_filter_l1_percep_adv():
+    exp_name = "guided-filter-l1-percep-adv"
+
+    model = "guided-filter"  # We wont use fft though
+
+    num_epochs = 512 - 1
+
+    batch_size = 2
+
+    log_interval = 30
+
+    lpips_device = "cuda:1" if torch.cuda.is_available() else "cpu"
+
+    lambda_adversarial = 0.6
+    lambda_perception = 1.2
+    lambda_image = 1  # l1
+
+
+named_configs = [
+    hdrnet,
+    guided_filter,
+    guided_filter_l1,
+    guided_filter_l1_tanh,
+    guided_filter_l1_percep_adv,
+]
 
 
 def initialise(ex):

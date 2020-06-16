@@ -3,7 +3,6 @@ from collections import namedtuple
 import torch
 import torch.nn as nn
 from torchvision import models
-from utils.contextual_loss import calculate_CX_Loss
 
 import torch.nn.functional as F
 
@@ -48,27 +47,24 @@ class GLoss(nn.modules.Module):
         self.device = device
 
         self.perception_device = perception_device
+        self.downsample = nn.Upsample(
+            size=(256, 512), mode="bilinear", align_corners=True
+        )
 
-        if self.args.lambda_perception or self.args.lambda_contextual:
+        if self.args.lambda_perception:
             self.LossNetwork = Vgg16FeatureExtractor().to(perception_device)
             self.LossNetwork.eval()
 
     def _perception_metric(self, X, Y):
-        feat_X = self.LossNetwork(X.to(self.perception_device))
-        feat_Y = self.LossNetwork(Y.to(self.perception_device))
+        # feat_X = self.LossNetwork(X.to(self.perception_device))
+        # feat_Y = self.LossNetwork(Y.to(self.perception_device))
+        #
+
+        feat_X = self.LossNetwork(self.downsample(X).to(self.perception_device))
+        feat_Y = self.LossNetwork(self.downsample(Y).to(self.perception_device))
 
         loss = F.mse_loss(feat_X.relu2_2, feat_Y.relu2_2)
         loss = loss + F.mse_loss(feat_X.relu4_3, feat_Y.relu4_3)
-
-        return loss
-
-    def _contextual_metric(self, X, Y):
-        feat_X = self.LossNetwork(X.to(self.perception_device))
-        feat_Y = self.LossNetwork(Y.to(self.perception_device))
-
-        # loss = calculate_CX_Loss(feat_X.relu3_3, feat_Y.relu3_3)
-        # loss = calculate_CX_Loss(feat_X.relu2_2, feat_Y.relu2_2)
-        loss = calculate_CX_Loss(feat_X.relu4_3, feat_Y.relu4_3)
 
         return loss
 
@@ -83,7 +79,6 @@ class GLoss(nn.modules.Module):
         self.total_loss = torch.tensor(0.0).to(self.device)
 
         self.adversarial_loss = torch.tensor(0.0).to(self.device)
-        self.contextual_loss = torch.tensor(0.0).to(self.device)
         self.perception_loss = torch.tensor(0.0).to(self.device)
         self.image_loss = torch.tensor(0.0).to(self.device)
 
@@ -92,54 +87,42 @@ class GLoss(nn.modules.Module):
         # During pretrain only MSE
 
         if self.args.lambda_image:
-            self.image_loss += (
-                F.mse_loss(output, target).mean() * self.args.lambda_image
+            self.image_loss += F.l1_loss(output, target).mean() * self.args.lambda_image
+
+        if self.args.lambda_perception:
+            self.perception_loss += (
+                self._perception_metric(output, target).to(device)
+                * self.args.lambda_perception
             )
 
-        if not pretrain:
-            if self.args.lambda_perception:
-                self.perception_loss += (
-                    self._perception_metric(output, target).to(device)
-                    * self.args.lambda_perception
+        if len(fake_logit):
+
+            if self.args.gan_type == "NSGAN":
+                self.adversarial_loss += (
+                    F.binary_cross_entropy_with_logits(
+                        fake_logit, ones_like(fake_logit)
+                    )
+                    * self.args.lambda_adversarial
+                )
+            elif self.args.gan_type == "RAGAN":
+                self.adversarial_loss += (
+                    F.binary_cross_entropy_with_logits(
+                        fake_logit - torch.mean(real_logit), ones_like(fake_logit)
+                    )
+                    * self.args.lambda_adversarial
                 )
 
-            if self.args.lambda_contextual:
-                self.contextual_loss += (
-                    self._contextual_metric(output, target).to(device)
-                    * self.args.lambda_contextual
+                self.adversarial_loss += (
+                    F.binary_cross_entropy_with_logits(
+                        real_logit - torch.mean(fake_logit), zeros_like(fake_logit)
+                    )
+                    * self.args.lambda_adversarial
                 )
 
-            if len(fake_logit):
-
-                if self.args.gan_type == "NSGAN":
-                    self.adversarial_loss += (
-                        F.binary_cross_entropy_with_logits(
-                            fake_logit, ones_like(fake_logit)
-                        )
-                        * self.args.lambda_adversarial
-                    )
-                elif self.args.gan_type == "RAGAN":
-                    self.adversarial_loss += (
-                        F.binary_cross_entropy_with_logits(
-                            fake_logit - torch.mean(real_logit), ones_like(fake_logit)
-                        )
-                        * self.args.lambda_adversarial
-                    )
-
-                    self.adversarial_loss += (
-                        F.binary_cross_entropy_with_logits(
-                            real_logit - torch.mean(fake_logit), zeros_like(fake_logit)
-                        )
-                        * self.args.lambda_adversarial
-                    )
-
-                    self.adversarial_loss /= 2.0
+                self.adversarial_loss /= 2.0
 
         self.total_loss += (
-            self.adversarial_loss
-            + self.image_loss
-            + self.contextual_loss
-            + self.perception_loss
+            self.adversarial_loss + self.image_loss + self.perception_loss
         )
 
         return self.total_loss
@@ -160,6 +143,7 @@ class DLoss(nn.Module):
             self.fake_loss = F.binary_cross_entropy_with_logits(
                 fake_logit, soft_zeros_like(fake_logit)
             )
+
         elif self.args.gan_type == "RAGAN":
             self.real_loss = F.binary_cross_entropy_with_logits(
                 real_logit - torch.mean(fake_logit), ones_like(real_logit)
@@ -196,14 +180,18 @@ class Vgg16FeatureExtractor(torch.nn.Module):
     def forward(self, X):
         h = self.slice1(X)
         # h_relu1_2 = h
+
         h = self.slice2(h)
         h_relu2_2 = h
+
         h = self.slice3(h)
         h_relu3_3 = h
+
         h = self.slice4(h)
         h_relu4_3 = h
-        # vgg_outputs = namedtuple("VggOutputs", ['relu1_2', 'relu2_2', 'relu3_3', 'relu4_3'])
+
         vgg_outputs = namedtuple("VggOutputs", ["relu2_2", "relu3_3", "relu4_3"])
-        # out = vgg_outputs(h_relu1_2, h_relu2_2, h_relu3_3, h_relu4_3)
+
         out = vgg_outputs(h_relu2_2, h_relu3_3, h_relu4_3)
+
         return out

@@ -481,7 +481,7 @@ def main(_run):
 
                             break
 
-                    test_pbar.refresh()
+                    test_pbar.refresh(
 
     except KeyboardInterrupt:
         logging.info("-" * 89)

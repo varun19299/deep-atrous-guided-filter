@@ -34,7 +34,7 @@ def base_config():
         )  # Checkpoints saved to ckpt_dir / exp_name
         run_dir = Path("/media/salman/udc/runs")  # Runs saved to run_dir / exp_name
 
-    elif system == "FPM":
+    elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
         output_dir = Path("output") / exp_name
         ckpt_dir = Path(
@@ -110,6 +110,7 @@ def base_config():
     model = "guided-filter"
 
     use_spectral_norm = False
+    pixelshuffle_ratio = 1
 
     gan_type = "NSGAN"  # or RAGAN
     assert gan_type in ["NSGAN", "RAGAN"]
@@ -169,6 +170,23 @@ def guided_filter_l1_tanh():
     model = "guided-filter"  # We wont use fft though
 
 
+def guided_filter_l1_tanh_deeper():
+    exp_name = "guided-filter-l1-tanh-deeper"
+
+    batch_size = 4
+
+    model = "guided-filter-deeper"  # We wont use fft though
+
+
+def guided_filter_l1_tanh_resunet():
+    exp_name = "guided-filter-l1-tanh-resunet"
+
+    batch_size = 4
+
+    model = "guided-filter-resunet"  # We wont use fft though
+    pixelshuffle_ratio = 2
+
+
 def guided_filter_l1_percep_adv():
     exp_name = "guided-filter-l1-percep-adv"
 
@@ -193,6 +211,8 @@ named_configs = [
     guided_filter_l1,
     guided_filter_l1_tanh,
     guided_filter_l1_percep_adv,
+    guided_filter_l1_tanh_deeper,
+    guided_filter_l1_tanh_resunet,
 ]
 
 

@@ -65,7 +65,7 @@ def main(_run):
     G, D = get_model.model(args, source_device=source_device, target_device=device)
 
     # Init the Low Res network
-    G.init_lr("ckpts/lr_net_latest.pth")
+    # G.init_lr("ckpts/lr_net_latest.pth")
     G = G.to(device)
 
     # Don't load disc unless needed
@@ -481,7 +481,7 @@ def main(_run):
 
                             break
 
-                    test_pbar.refresh(
+                    test_pbar.refresh()
 
     except KeyboardInterrupt:
         logging.info("-" * 89)

@@ -2,8 +2,17 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from torch.nn import init
+from utils.model_serialization import load_state_dict
 
 from models.guided_filter import FastGuidedFilter, ConvGuidedFilter
+from models.resunet_pixel_shuffle import ResUnet
+
+from sacred import Experiment
+from config import initialise
+from utils.tupperware import tupperware
+
+ex = Experiment("DGF")
+ex = initialise(ex)
 
 
 def weights_init_identity(m):
@@ -85,7 +94,10 @@ class DeepGuidedFilter(nn.Module):
         return self.gf(x_lr, self.lr(x_lr), x_hr).clamp(0, 1)
 
     def init_lr(self, path):
-        self.lr.load_state_dict(torch.load(path))
+        checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        load_state_dict(self.lr, checkpoint["state_dict"])
+
+        # self.lr.load_state_dict(torch.load(path))
 
 
 class DeepGuidedFilterAdvanced(DeepGuidedFilter):
@@ -141,8 +153,38 @@ class DeepGuidedFilterGuidedMapConvGF(DeepGuidedFilterConvGF):
         )
 
 
-if __name__ == "__main__":
-    model = DeepGuidedFilterGuidedMapConvGF()
-    x_hr = torch.rand(1, 3, 1024, 2048)
-    out = model(x_hr)
+class DeepGuidedFilterGuidedMapConvGFResUnet(DeepGuidedFilterConvGF):
+    def __init__(self, args, radius=1, dilation=0, c=16, layer=5):
+        super(DeepGuidedFilterGuidedMapConvGFResUnet, self).__init__(radius, layer)
+
+        self.guided_map = nn.Sequential(
+            nn.Conv2d(3, c, 1, bias=False)
+            if dilation == 0
+            else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
+            AdaptiveNorm(c),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(c, 3, 1),
+        )
+
+        self.lr = ResUnet(args)
+
+        self.downsample = nn.Upsample(
+            size=(256, 512), mode="bilinear", align_corners=True
+        )
+
+    def forward(self, x_hr):
+        x_lr = self.downsample(x_hr)
+        return F.tanh(
+            self.gf(self.guided_map(x_lr), self.lr(x_lr), self.guided_map(x_hr))
+        )
+
+
+@ex.automain
+def main(_run):
+    from torchsummary import summary
+
+    args = tupperware(_run.config)
+    model = DeepGuidedFilterGuidedMapConvGFResUnet(args)
+
+    summary(model, (3, 1024, 2046))
     breakpoint()

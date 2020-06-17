@@ -223,7 +223,7 @@ def save_weights(
 
             # Specific saving
             if (
-                epoch % args.save_copy_every_epochs == 0
+                (epoch + 2) % args.save_copy_every_epochs == 0
                 and tag == "latest"
                 and is_sys_allowed
             ):
@@ -248,7 +248,7 @@ def save_weights(
             torch.save(D_state, path_D)
 
             if (
-                epoch % args.save_copy_every_epochs == 0
+                (epoch + 2) % args.save_copy_every_epochs == 0
                 and tag == "latest"
                 and is_sys_allowed
             ):

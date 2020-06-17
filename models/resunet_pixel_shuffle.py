@@ -182,7 +182,7 @@ class ResUnet(nn.Module):
         self.conv_original_size2 = convrelu(128 + 128, 128, 3, 1, normaliser=normaliser)
 
         self.get_image = nn.Sequential(
-            nn.Conv2d(128, 3 * args.pixelshuffle_ratio ** 2, 1), nn.ReLU()
+            nn.Conv2d(128, 3 * args.pixelshuffle_ratio ** 2, 1), nn.LeakyReLU()
         )
         self.pixelshuffle_ratio = args.pixelshuffle_ratio
 

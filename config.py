@@ -95,7 +95,7 @@ def base_config():
     save_filename_latest_D = "D_latest.pth"
 
     # save a copy of weights every x epochs
-    save_copy_every_epochs = 10
+    save_copy_every_epochs = 128
 
     # the number of iterations (default: 10) to print at
     log_interval = 20
@@ -108,6 +108,7 @@ def base_config():
     # ---------------------------------------------------------------------------- #
 
     model = "guided-filter"
+    CAN_layers = 5
 
     use_spectral_norm = False
     pixelshuffle_ratio = 1
@@ -174,17 +175,31 @@ def guided_filter_l1_tanh_deeper():
     exp_name = "guided-filter-l1-tanh-deeper"
 
     batch_size = 4
+    CAN_layers = 9
 
     model = "guided-filter-deeper"  # We wont use fft though
 
 
-def guided_filter_l1_tanh_resunet():
-    exp_name = "guided-filter-l1-tanh-resunet"
+def guided_filter_l1_tanh_gdrn():
+    exp_name = "guided-filter-l1-tanh-gdrn"
 
-    batch_size = 4
+    batch_size = 3
 
-    model = "guided-filter-resunet"  # We wont use fft though
+    model = "guided-filter-gdrn"  # We wont use fft though
     pixelshuffle_ratio = 2
+
+
+def guided_filter_l1_tanh_pixelshuffle():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle"
+
+    batch_size = 9
+    CAN_layers = 21
+
+    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    pixelshuffle_ratio = 2
+
+    dataparallel = True
+    device_list = [0, 1, 2]
 
 
 def guided_filter_l1_percep_adv():
@@ -194,7 +209,7 @@ def guided_filter_l1_percep_adv():
 
     num_epochs = 512 - 1
 
-    batch_size = 2
+    batch_size = 3
 
     log_interval = 30
 
@@ -212,7 +227,8 @@ named_configs = [
     guided_filter_l1_tanh,
     guided_filter_l1_percep_adv,
     guided_filter_l1_tanh_deeper,
-    guided_filter_l1_tanh_resunet,
+    guided_filter_l1_tanh_gdrn,
+    guided_filter_l1_tanh_pixelshuffle,
 ]
 
 

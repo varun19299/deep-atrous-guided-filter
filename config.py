@@ -65,6 +65,9 @@ def base_config():
     batch_size = 8
     num_threads = batch_size  # parallel workers
 
+    # augment
+    do_augment = True
+
     # ---------------------------------------------------------------------------- #
     # Train Configs
     # ---------------------------------------------------------------------------- #
@@ -195,11 +198,86 @@ def guided_filter_l1_tanh_pixelshuffle():
     batch_size = 9
     CAN_layers = 21
 
+    do_augment = False
+
     model = "guided-filter-pixelshuffle"  # We wont use fft though
     pixelshuffle_ratio = 2
 
     dataparallel = True
     device_list = [0, 1, 2]
+
+
+def guided_filter_l1_tanh_pixelshuffle_augment():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-augment"
+
+    batch_size = 9
+    CAN_layers = 21
+
+    do_augment = True
+
+    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    pixelshuffle_ratio = 2
+
+    dataparallel = True
+    device_list = [0, 1, 2]
+
+
+def guided_filter_l1_tanh_pixelshuffle_inverse():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-inverse"
+
+    batch_size = 6
+    CAN_layers = 15
+
+    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    pixelshuffle_ratio = 2
+
+    dataparallel = True
+    device_list = [0, 1]
+
+    num_epochs = 256 - 1
+
+    system = "CFI"
+    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
+
+    # ---------------------------------------------------------------------------- #
+    # Directories
+    # ---------------------------------------------------------------------------- #
+
+    if system == "CFI":
+        image_dir = Path("/mnt/ssd/udc/")
+        output_dir = Path("output") / exp_name
+        ckpt_dir = Path("ckpts")  # Checkpoints saved to ckpt_dir / exp_name
+        run_dir = Path("runs")  # Runs saved to run_dir / exp_name
+
+    elif system == "FPM":
+        image_dir = Path("/media/salman/udc/")
+        output_dir = Path("output") / exp_name
+        ckpt_dir = Path(
+            "/media/salman/udc/ckpts"
+        )  # Checkpoints saved to ckpt_dir / exp_name
+        run_dir = Path("/media/salman/udc/runs")  # Runs saved to run_dir / exp_name
+
+    elif system == "Jarvis":
+        image_dir = Path("/media/data/salman/udc/")
+        output_dir = Path("output") / exp_name
+        ckpt_dir = Path(
+            "/media/data/salman/udc/ckpts"
+        )  # Checkpoints saved to ckpt_dir / exp_name
+        run_dir = Path(
+            "/media/data/salman/udc/runs"
+        )  # Runs saved to run_dir / exp_name
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    train_source_dir = image_dir / "Poled" / "HQ"
+    train_target_dir = image_dir / "Poled" / "LQ"
+
+    val_source_dir = None
+    val_target_dir = None
+
+    test_source_dir = None
 
 
 def guided_filter_l1_percep_adv():
@@ -229,6 +307,8 @@ named_configs = [
     guided_filter_l1_tanh_deeper,
     guided_filter_l1_tanh_gdrn,
     guided_filter_l1_tanh_pixelshuffle,
+    guided_filter_l1_tanh_pixelshuffle_augment,
+    guided_filter_l1_tanh_pixelshuffle_inverse,
 ]
 
 

@@ -19,6 +19,7 @@ import cv2
 import numpy as np
 from config import initialise
 from pathlib import Path
+import random
 
 if TYPE_CHECKING:
     from utils.typing_alias import *
@@ -94,6 +95,43 @@ class OLEDDataset(Dataset):
             target_path = self.target_paths[index]
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
             target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
+
+            source = cv2.resize(source, (self.args.image_width, self.args.image_height))
+            target = cv2.resize(target, (self.args.image_width, self.args.image_height))
+
+            # Data augmentation
+            if self.args.do_augment:
+                # Vertical flip
+                if random.random() < 0.25:
+                    source = source[::-1]
+                    target = target[::-1]
+
+                # Horz flip
+                if random.random() < 0.25:
+                    source = source[:, ::-1]
+                    target = target[:, ::-1]
+
+                # +90 rotate
+                if random.random() < 0.1:
+                    source = cv2.rotate(source, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                    target = cv2.rotate(target, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+                # -90 rotate
+                if random.random() < 0.1:
+                    source = cv2.rotate(source, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                    target = cv2.rotate(target, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+                # 180 rotate
+                if random.random() < 0.25:
+                    source = cv2.rotate(source, cv2.ROTATE_180)
+                    target = cv2.rotate(target, cv2.ROTATE_180)
+
+                source = cv2.resize(
+                    source, (self.args.image_width, self.args.image_height)
+                )
+                target = cv2.resize(
+                    target, (self.args.image_width, self.args.image_height)
+                )
 
         elif self.mode == "val":
             target_path = self.target_paths[index]

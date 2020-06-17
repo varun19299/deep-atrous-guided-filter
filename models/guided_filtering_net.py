@@ -196,7 +196,7 @@ class DeepGuidedFilterGuidedMapConvGF(DeepGuidedFilterConvGF):
         )
 
         self.downsample = nn.Upsample(
-            size=(256, 512), mode="bilinear", align_corners=True
+            scale_factor=0.25, mode="bilinear", align_corners=True
         )
 
     def forward(self, x_hr):
@@ -247,7 +247,7 @@ class DeepGuidedFilterGuidedMapConvGFGDRN(DeepGuidedFilterConvGF):
         self.lr = ntire_rdb_gd_rir_ver2(input_channel=12, numofrdb=12)
 
         self.downsample = nn.Upsample(
-            size=(256, 512), mode="bilinear", align_corners=True
+            scale_factor=0.25, mode="bilinear", align_corners=True
         )
 
     def forward(self, x_hr):

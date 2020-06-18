@@ -106,6 +106,16 @@ def base_config():
     # run val or test only every x epochs
     val_test_epoch_interval = 5
 
+    # ----------------------------------------------------------------------------  #
+    # Val Configs
+    # ---------------------------------------------------------------------------- #
+
+    # Self ensemble
+    self_ensemble = False
+
+    # Save mat file
+    save_mat = False
+
     # ---------------------------------------------------------------------------- #
     # Model: See models/get_model.py for registry
     # ---------------------------------------------------------------------------- #
@@ -215,11 +225,14 @@ def guided_filter_l1_tanh_pixelshuffle_augment():
 
     do_augment = True
 
+    finetune = True
+    num_epochs = 128 - 1
+
     model = "guided-filter-pixelshuffle"  # We wont use fft though
     pixelshuffle_ratio = 2
 
     dataparallel = True
-    device_list = [0, 1, 2]
+    device_list = [0, 1]
 
 
 def guided_filter_l1_tanh_pixelshuffle_inverse():

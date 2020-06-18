@@ -111,16 +111,6 @@ class OLEDDataset(Dataset):
                     source = source[:, ::-1]
                     target = target[:, ::-1]
 
-                # +90 rotate
-                if random.random() < 0.1:
-                    source = cv2.rotate(source, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                    target = cv2.rotate(target, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-                # -90 rotate
-                if random.random() < 0.1:
-                    source = cv2.rotate(source, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                    target = cv2.rotate(target, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
                 # 180 rotate
                 if random.random() < 0.25:
                     source = cv2.rotate(source, cv2.ROTATE_180)

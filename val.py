@@ -33,9 +33,15 @@ if TYPE_CHECKING:
 # Train helpers
 from utils.train_helper import set_device, load_models, AvgLoss_with_dict
 
+# Self ensemble
+from utils.self_ensemble import ensemble_ops
+
 # Experiment, add any observers by command line
 ex = Experiment("val")
 ex = initialise(ex)
+
+# Save mat
+from scipy.io.matlab.mio import savemat
 
 # To prevent "RuntimeError: received 0 items of ancdata"
 torch.multiprocessing.set_sharing_strategy("file_system")
@@ -104,6 +110,24 @@ def main(_run):
 
                 output = G(source)
 
+                if args.self_ensemble:
+                    len_transforms = len(ensemble_ops)
+                    output_ensembled = [output]
+
+                    for k in ensemble_ops.keys():
+                        # Forward transform
+                        source_t = ensemble_ops[k][0](source)
+
+                        output_t = G(source_t)
+
+                        # Inverse transform
+                        output_t = ensemble_ops[k][1](output_t)
+
+                        output_ensembled.append(output_t)
+
+                    output_ensembled = torch.stack(output_ensembled, dim=0)
+                    output = torch.mean(output_ensembled, dim=0, keepdim=True)
+
                 # PSNR
                 metrics_dict["PSNR"] += PSNR(output, target)
 
@@ -169,6 +193,28 @@ def main(_run):
 
                 output = G(source)
 
+                if args.self_ensemble:
+                    len_transforms = len(ensemble_ops)
+                    output_ensembled = [output]
+
+                    for k in ensemble_ops.keys():
+                        # Forward transform
+                        source_t = ensemble_ops[k][0](source)
+
+                        output_t = G(source_t)
+
+                        # Inverse transform
+                        output_t = ensemble_ops[k][1](output_t)
+
+                        output_ensembled.append(output_t)
+
+                    output_ensembled = torch.stack(output_ensembled, dim=0)
+                    output = torch.mean(output_ensembled, dim=0, keepdim=True)
+
+                if args.save_mat:
+                    _, c, h, w = output.shape
+                    output_mat = torch.zeros(len(data.test_loader), c, h, w)
+
                 for e in range(args.batch_size):
                     output_numpy = (
                         output[e]
@@ -182,12 +228,34 @@ def main(_run):
 
                     # Dump to output folder
                     name = filename[e]
-                    path_output = filename / ("output_" + name)
+                    path_output = test_path / ("output_" + name)
 
                     cv2.imwrite(
                         str(path_output),
                         (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
                     )
+
+                    # Save to mat file
+                    output_numpy_int8 = (output_numpy * 255.0).astype(int)
+                    output_index = int(name.replace(".png", "")) - 1
+                    output_mat[output_index] = output_numpy_int8
+
+                if args.save_mat:
+                    # mat file
+                    savemat(test_path, {"results": output_mat})
+
+                    # submission indormation
+                    runtime = 0.0  # seconds / megapixel
+                    cpu_or_gpu = 0  # 0: GPU, 1: CPU
+                    method = 1  # 0: traditional methods, 1: deep learning method
+                    other = "(optional) any additional description or information"
+
+                    # prepare and save readme file
+                    with open(test_path / "readme.txt", "w") as readme_file:
+                        readme_file.write(f"Runtime (seconds / megapixel): {runtime}\n")
+                        readme_file.write(f"CPU[1] / GPU[0]: {cpu_or_gpu}\n")
+                        readme_file.write(f"Method: {method}\n")
+                        readme_file.write(f"Other description: {other}\n")
 
                 pbar.update(args.batch_size)
                 pbar.set_description(f"Test Epoch : {start_epoch} Step: {global_step}")

@@ -71,6 +71,8 @@ def main(_run):
     # Don't load disc unless needed
     if args.lambda_adversarial:
         D = D.to(source_device)
+    else:
+        D = None
 
     # Optimisers
     (g_optimizer, d_optimizer), (g_lr_scheduler, d_lr_scheduler) = get_optimisers(

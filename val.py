@@ -60,8 +60,7 @@ def main(_run):
 
     # Get data
     data = get_dataloaders(args)
-
-    data.val_loader = data.train_loader
+    # data.val_loader = data.train_loader
 
     # Model
     G, _ = get_model.model(args, source_device=source_device, target_device=device)
@@ -87,21 +86,29 @@ def main(_run):
 
     logging.info(f"Loaded experiment {args.exp_name} trained for {start_epoch} epochs.")
 
-    # Run val for an epoch
-    avg_metrics.reset()
-    pbar = tqdm(range(len(data.val_loader) * args.batch_size), dynamic_ncols=True)
-
     # Val and test paths
-    val_path = args.output_dir / f"val_{args.inference_mode}"
+    if args.self_ensemble:
+        val_path = args.output_dir / f"val_{args.inference_mode}_self_ensemble"
+    else:
+        val_path = args.output_dir / f"val_{args.inference_mode}"
     val_path.mkdir(exist_ok=True, parents=True)
 
-    test_path = args.output_dir / f"test_{args.inference_mode}"
+    if args.self_ensemble:
+        test_path = args.output_dir / f"test_{args.inference_mode}_self_ensemble"
+    else:
+        test_path = args.output_dir / f"test_{args.inference_mode}"
     test_path.mkdir(exist_ok=True, parents=True)
 
     with torch.no_grad():
         G.eval()
 
         if data.val_loader:
+            # Run val for an epoch
+            avg_metrics.reset()
+            pbar = tqdm(
+                range(len(data.val_loader) * args.batch_size), dynamic_ncols=True
+            )
+
             for i, batch in enumerate(data.val_loader):
                 metrics_dict = defaultdict(float)
 
@@ -125,7 +132,7 @@ def main(_run):
 
                         output_ensembled.append(output_t)
 
-                    output_ensembled = torch.stack(output_ensembled, dim=0)
+                    output_ensembled = torch.cat(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
                 # PSNR
@@ -186,6 +193,13 @@ def main(_run):
             pbar = tqdm(
                 range(len(data.test_loader) * args.batch_size), dynamic_ncols=True
             )
+
+            if args.save_mat:
+                output_mat = np.zeros(
+                    (len(data.test_loader), args.image_height, args.image_width, 3),
+                    dtype=np.uint8,
+                )
+
             for i, batch in enumerate(data.test_loader):
 
                 source, filename = batch
@@ -211,10 +225,6 @@ def main(_run):
                     output_ensembled = torch.stack(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
-                if args.save_mat:
-                    _, c, h, w = output.shape
-                    output_mat = torch.zeros(len(data.test_loader), c, h, w)
-
                 for e in range(args.batch_size):
                     output_numpy = (
                         output[e]
@@ -235,27 +245,28 @@ def main(_run):
                         (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
                     )
 
-                    # Save to mat file
-                    output_numpy_int8 = (output_numpy * 255.0).astype(int)
-                    output_index = int(name.replace(".png", "")) - 1
-                    output_mat[output_index] = output_numpy_int8
-
-                if args.save_mat:
-                    # mat file
-                    savemat(test_path, {"results": output_mat})
-
-                    # submission indormation
-                    runtime = 0.0  # seconds / megapixel
-                    cpu_or_gpu = 0  # 0: GPU, 1: CPU
-                    method = 1  # 0: traditional methods, 1: deep learning method
-                    other = "(optional) any additional description or information"
-
-                    # prepare and save readme file
-                    with open(test_path / "readme.txt", "w") as readme_file:
-                        readme_file.write(f"Runtime (seconds / megapixel): {runtime}\n")
-                        readme_file.write(f"CPU[1] / GPU[0]: {cpu_or_gpu}\n")
-                        readme_file.write(f"Method: {method}\n")
-                        readme_file.write(f"Other description: {other}\n")
+                    if args.save_mat:
+                        # Save to mat file
+                        output_numpy_int8 = (output_numpy * 255.0).astype(np.uint8)
+                        output_index = int(name.replace(".png", "")) - 1
+                        output_mat[output_index] = output_numpy_int8
 
                 pbar.update(args.batch_size)
                 pbar.set_description(f"Test Epoch : {start_epoch} Step: {global_step}")
+
+            if args.save_mat:
+                # mat file
+                savemat(test_path / "results.mat", {"results": output_mat})
+
+                # submission indormation
+                runtime = 0.0  # seconds / megapixel
+                cpu_or_gpu = 0  # 0: GPU, 1: CPU
+                method = 1  # 0: traditional methods, 1: deep learning method
+                other = "(optional) any additional description or information"
+
+                # prepare and save readme file
+                with open(test_path / "readme.txt", "w") as readme_file:
+                    readme_file.write(f"Runtime (seconds / megapixel): {runtime}\n")
+                    readme_file.write(f"CPU[1] / GPU[0]: {cpu_or_gpu}\n")
+                    readme_file.write(f"Method: {method}\n")
+                    readme_file.write(f"Other description: {other}\n")

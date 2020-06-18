@@ -1,4 +1,5 @@
 import cv2
+import torch
 
 
 def flip_horizontal(img):
@@ -6,7 +7,7 @@ def flip_horizontal(img):
     :param img: [1, C, H, W]
     :return:
     """
-    return img[:, :, :, ::-1]
+    return torch.flip(img, dims=(3,))
 
 
 def flip_vertical(img):
@@ -14,7 +15,7 @@ def flip_vertical(img):
     :param img: [1, C, H, W]
     :return:
     """
-    return img[:, :, ::-1]
+    return torch.flip(img, dims=(2,))
 
 
 def rotate_180(img):
@@ -22,7 +23,7 @@ def rotate_180(img):
     :param img: [1, C, H, W]
     :return:
     """
-    return img[:, :, ::-1, ::-1]
+    return torch.flip(img, dims=(2, 3))
 
 
 def rotate_90_clock(img):

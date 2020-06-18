@@ -137,7 +137,9 @@ def main(_run):
         for epoch in range(start_epoch, args.num_epochs):
             # Train mode
             G.train()
-            D.train()
+
+            if args.lambda_adversarial:
+                D.train()
             train_pbar.reset()
 
             for i, batch in enumerate(data.train_loader):
@@ -293,7 +295,9 @@ def main(_run):
             # Val and test
             with torch.no_grad():
                 G.eval()
-                D.eval()
+
+                if args.lambda_adversarial:
+                    D.eval()
 
                 if data.val_loader:
                     val_pbar.reset()

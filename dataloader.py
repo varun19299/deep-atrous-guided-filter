@@ -7,16 +7,11 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING
 from sacred import Experiment
-import skimage
-import copy
 
 # Torch modules
 from torch.utils.data import DataLoader, Dataset
-import torch.nn.functional as F
-import torchvision.transforms as transforms
 import torch
 import cv2
-import numpy as np
 from config import initialise
 from pathlib import Path
 import random
@@ -68,10 +63,7 @@ class OLEDDataset(Dataset):
         )
 
     def _load_dataset(self):
-        if self.mode == "train":
-            glob_str = "*.png"
-        elif self.mode in ["val", "test"]:
-            glob_str = "*.npy"
+        glob_str = "*.png"
 
         if self.source_dir:
             source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]
@@ -125,11 +117,11 @@ class OLEDDataset(Dataset):
 
         elif self.mode == "val":
             target_path = self.target_paths[index]
-            source = np.load(source_path) / 255.0
-            target = np.load(target_path) / 255.0
+            source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
+            target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
 
         elif self.mode == "test":
-            source = np.load(source_path) / 255.0
+            source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
 
         source = torch.tensor(source).float().permute(2, 0, 1)
         source = (source - 0.5) * 2

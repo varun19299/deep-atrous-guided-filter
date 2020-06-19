@@ -12,6 +12,7 @@ from models.DGF_utils.guided_filter import FastGuidedFilter, ConvGuidedFilter
 from models.DGF_utils.adaptive_norm import AdaptiveNorm
 from models.DGF_utils.weights_init import weights_init_identity
 from models.DGF_utils.eca_module import eca_layer
+from models.DGF_utils.SIREN import SIREN
 
 
 from sacred import Experiment
@@ -58,7 +59,14 @@ def build_lr_net(norm=AdaptiveNorm, layer=5):
     return net
 
 
-def build_lr_net_pixelshuffle(args, norm=AdaptiveNorm, layer=5, use_eca=False):
+def build_lr_net_pixelshuffle(
+    args, norm=AdaptiveNorm, layer=5, use_eca=False, siren=False
+):
+    if siren:
+        activation = SIREN()
+    else:
+        activation = nn.LeakyReLU(0.2)
+
     layers = [
         nn.Conv2d(
             3 * args.pixelshuffle_ratio ** 2,
@@ -70,7 +78,7 @@ def build_lr_net_pixelshuffle(args, norm=AdaptiveNorm, layer=5, use_eca=False):
             bias=False,
         ),
         norm(48),
-        nn.LeakyReLU(0.2, inplace=True),
+        activation,
     ]
 
     for l in range(1, layer):
@@ -86,7 +94,7 @@ def build_lr_net_pixelshuffle(args, norm=AdaptiveNorm, layer=5, use_eca=False):
                     bias=False,
                 ),
                 norm(48),
-                nn.LeakyReLU(0.2, inplace=True),
+                activation,
             ]
         else:
             layers += [
@@ -101,7 +109,7 @@ def build_lr_net_pixelshuffle(args, norm=AdaptiveNorm, layer=5, use_eca=False):
                 ),
                 norm(48),
                 eca_layer(48),
-                nn.LeakyReLU(0.2, inplace=True),
+                activation,
             ]
 
     if use_eca:
@@ -110,7 +118,7 @@ def build_lr_net_pixelshuffle(args, norm=AdaptiveNorm, layer=5, use_eca=False):
                 48, 48, kernel_size=3, stride=1, padding=1, dilation=1, bias=False
             ),
             norm(48),
-            nn.LeakyReLU(0.2, inplace=True),
+            activation,
             eca_layer(48),
             nn.Conv2d(
                 48,
@@ -127,7 +135,7 @@ def build_lr_net_pixelshuffle(args, norm=AdaptiveNorm, layer=5, use_eca=False):
                 48, 48, kernel_size=3, stride=1, padding=1, dilation=1, bias=False
             ),
             norm(48),
-            nn.LeakyReLU(0.2, inplace=True),
+            activation,
             nn.Conv2d(
                 48,
                 3 * args.pixelshuffle_ratio ** 2,
@@ -224,35 +232,9 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffle(DeepGuidedFilterConvGF):
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv2d(c, 3, 1),
         )
-        self.lr = build_lr_net_pixelshuffle(args, layer=args.CAN_layers)
-
-        self.downsample = nn.Upsample(
-            scale_factor=0.5, mode="bilinear", align_corners=True
+        self.lr = build_lr_net_pixelshuffle(
+            args, layer=args.CAN_layers, siren=args.use_SIREN, use_eca=args.use_ECA
         )
-
-    def forward(self, x_hr):
-        x_lr = self.downsample(x_hr)
-        x_lr_unpixelshuffled = unpixel_shuffle(x_lr, 2)
-        y_lr = F.pixel_shuffle(self.lr(x_lr_unpixelshuffled), 2)
-
-        return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
-
-
-class DeepGuidedFilterGuidedMapConvGFPixelShuffleECA(DeepGuidedFilterConvGF):
-    def __init__(self, args, radius=1, dilation=0, c=16, layer=5):
-        super(DeepGuidedFilterGuidedMapConvGFPixelShuffleECA, self).__init__(
-            radius, layer
-        )
-
-        self.guided_map = nn.Sequential(
-            nn.Conv2d(3, c, 1, bias=False)
-            if dilation == 0
-            else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
-            AdaptiveNorm(c),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(c, 3, 1),
-        )
-        self.lr = build_lr_net_pixelshuffle(args, layer=args.CAN_layers, use_eca=True)
 
         self.downsample = nn.Upsample(
             scale_factor=0.5, mode="bilinear", align_corners=True
@@ -328,6 +310,6 @@ def main(_run):
     from torchsummary import summary
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(args)
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffle(args)
 
     summary(model, (3, 1024, 2048))

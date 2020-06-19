@@ -1,12 +1,3 @@
-"""
-Convention
-
-ours/naive-fft-(fft_h-fft_w)-learn-(learn_h-learn_w)-meas-(meas_h-meas_w)-kwargs
-
-* Phlatcam: 1518 x 2012 (post demosiacking)
-* Flatcam: 512 x 640 (post demosiacking)
-* Diffusercam: 270 x 480 (post demosiacking, downsize by 4)
-"""
 from pathlib import Path
 import torch
 
@@ -117,6 +108,8 @@ def base_config():
 
     model = "guided-filter"
     CAN_layers = 5
+    use_SIREN = False
+    use_ECA = False
 
     use_spectral_norm = False
     pixelshuffle_ratio = 1
@@ -152,7 +145,7 @@ def base_config():
 def guided_filter_l1_tanh():
     exp_name = "guided-filter-l1-tanh"
 
-    model = "guided-filter"  # We wont use fft though
+    model = "guided-filter"
 
 
 def guided_filter_l1_tanh_pixelshuffle():
@@ -163,27 +156,44 @@ def guided_filter_l1_tanh_pixelshuffle():
 
     do_augment = False
 
-    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
 
     dataparallel = True
     device_list = [0, 1, 2]
+
+
+def guided_filter_l1_tanh_pixelshuffle_siren():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-siren"
+
+    batch_size = 6
+    CAN_layers = 21
+
+    do_augment = True
+
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
+    use_SIREN = True
+
+    dataparallel = True
+    device_list = [0, 1]
 
 
 def guided_filter_l1_tanh_pixelshuffle_eca():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-eca"
 
-    batch_size = 9
+    batch_size = 6
     CAN_layers = 21
 
     do_augment = False
     num_epochs = 1024 - 1
 
-    model = "guided-filter-pixelshuffle-eca"  # We wont use fft though
+    model = "guided-filter-pixelshuffle"
+    use_ECA = True
     pixelshuffle_ratio = 2
 
     dataparallel = True
-    device_list = [0, 1, 2]
+    device_list = [0, 1]
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca():
@@ -193,7 +203,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca():
 
     do_augment = False
 
-    model = "guided-filter-pixelshuffle-gca"  # We wont use fft though
+    model = "guided-filter-pixelshuffle-gca"
     pixelshuffle_ratio = 2
 
     dataparallel = True
@@ -208,7 +218,7 @@ def guided_filter_l1_tanh_pixelshuffle_sim():
 
     do_augment = True
 
-    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
 
     dataparallel = True
@@ -267,7 +277,7 @@ def guided_filter_l1_tanh_pixelshuffle_augment():
     finetune = True
     num_epochs = 128 - 1
 
-    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
 
     dataparallel = True
@@ -281,7 +291,7 @@ def guided_filter_l1_tanh_pixelshuffle_inverse():
     CAN_layers = 15
     do_augment = True
 
-    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
 
     dataparallel = True
@@ -326,6 +336,104 @@ def guided_filter_l1_tanh_pixelshuffle_inverse():
     test_source_dir = image_dir / "DIV2K_val" / "HQ"
 
 
+def guided_filter_l1_tanh_pixelshuffle_forward_glass():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-glass"
+
+    batch_size = 3
+    CAN_layers = 21
+    do_augment = True
+
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
+
+    batch_size = 6
+    num_epochs = 127 - 1
+
+    system = "CFI"
+    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
+
+    # ---------------------------------------------------------------------------- #
+    # Directories
+    # ---------------------------------------------------------------------------- #
+
+    if system == "CFI":
+        image_dir = Path("/mnt/ssd/udc/")
+        dump_dir = Path(".")
+
+    elif system == "FPM":
+        image_dir = Path("/media/salman/udc/")
+        dump_dir = image_dir
+
+    elif system == "Jarvis":
+        image_dir = Path("/media/data/salman/udc/")
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    train_source_dir = image_dir / "DIV2K" / "GT_train"
+    train_target_dir = image_dir / "Poled" / "HQ"
+
+    val_source_dir = None
+    val_target_dir = None
+
+    test_source_dir = image_dir / "DIV2K" / "GT_val"
+
+
+def guided_filter_l1_tanh_pixelshuffle_forward_poled():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-poled"
+
+    batch_size = 6
+    CAN_layers = 5
+    do_augment = True
+
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
+
+    batch_size = 6
+    num_epochs = 127 - 1
+
+    system = "CFI"
+    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
+
+    # ---------------------------------------------------------------------------- #
+    # Directories
+    # ---------------------------------------------------------------------------- #
+
+    if system == "CFI":
+        image_dir = Path("/mnt/ssd/udc/")
+        dump_dir = Path(".")
+
+    elif system == "FPM":
+        image_dir = Path("/media/salman/udc/")
+        dump_dir = image_dir
+
+    elif system == "Jarvis":
+        image_dir = Path("/media/data/salman/udc/")
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    train_source_dir = image_dir / "DIV2K" / "GT_train"
+    train_target_dir = image_dir / "Poled" / "LQ"
+
+    val_source_dir = image_dir / "DIV2K" / "GT_val"
+    val_target_dir = image_dir / "Poled_val" / "LQ"
+
+    test_source_dir = None
+
+
 def guided_filter_l1_tanh_pixelshuffle_toled():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-toled"
 
@@ -335,7 +443,7 @@ def guided_filter_l1_tanh_pixelshuffle_toled():
     do_augment = False
     num_epochs = 1024 - 1
 
-    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
 
     dataparallel = True
@@ -380,11 +488,14 @@ def guided_filter_l1_tanh_pixelshuffle_toled():
 named_configs = [
     guided_filter_l1_tanh,
     guided_filter_l1_tanh_pixelshuffle,
+    guided_filter_l1_tanh_pixelshuffle_siren,
     guided_filter_l1_tanh_pixelshuffle_eca,
     guided_filter_l1_tanh_pixelshuffle_gca,
     guided_filter_l1_tanh_pixelshuffle_sim,
     guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_inverse,
+    guided_filter_l1_tanh_pixelshuffle_forward_glass,
+    guided_filter_l1_tanh_pixelshuffle_forward_poled,
     guided_filter_l1_tanh_pixelshuffle_toled,
 ]
 

@@ -1,11 +1,10 @@
 from sacred import Experiment
 from typing import TYPE_CHECKING
 
-import torch
 from functools import partial
 from torch import nn
 
-from models.spectral import SpectralNorm
+from models.Discriminator.spectral import SpectralNorm
 
 from config import initialise
 

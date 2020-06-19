@@ -3,40 +3,18 @@ Get model
 """
 import logging
 
-from models.unet import Unet
-from models.hdrnet import HDRNet
-from models.Discriminator import Discriminator
+from models.Discriminator.discriminator import Discriminator
 from models.guided_filtering_net import (
     DeepGuidedFilterGuidedMapConvGF,
     DeepGuidedFilterGuidedMapConvGFGDRN,
     DeepGuidedFilterGuidedMapConvGFPixelShuffle,
+    DeepGuidedFilterGuidedMapConvGFPixelShuffleECA,
+    DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA,
 )
 
 
 def model(args, source_device=None, target_device=None):
-    if args.model == "unet":
-        return (
-            Unet(args),
-            Discriminator(
-                args,
-                source_device=source_device,
-                target_device=target_device,
-                use_pool=not args.use_patch_gan,
-            ),
-        )
-
-    elif args.model == "hdrnet":
-        return (
-            HDRNet(),
-            Discriminator(
-                args,
-                source_device=source_device,
-                target_device=target_device,
-                use_pool=not args.use_patch_gan,
-            ),
-        )
-
-    elif args.model == "guided-filter":
+    if args.model == "guided-filter":
         return (
             DeepGuidedFilterGuidedMapConvGF(),
             Discriminator(
@@ -72,6 +50,28 @@ def model(args, source_device=None, target_device=None):
     elif args.model == "guided-filter-pixelshuffle":
         return (
             DeepGuidedFilterGuidedMapConvGFPixelShuffle(args),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "guided-filter-pixelshuffle-eca":
+        return (
+            DeepGuidedFilterGuidedMapConvGFPixelShuffleECA(args),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "guided-filter-pixelshuffle-gca":
+        return (
+            DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(args),
             Discriminator(
                 args,
                 source_device=source_device,

@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.autograd import Variable
 
-from models.box_filter import BoxFilter
+from models.DGF_utils.box_filter import BoxFilter
 
 
 class FastGuidedFilter(nn.Module):

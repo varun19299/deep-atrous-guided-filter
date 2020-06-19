@@ -60,7 +60,7 @@ def main(_run):
 
     # Get data
     data = get_dataloaders(args)
-    # data.val_loader = data.train_loader
+    data.val_loader = data.train_loader
 
     # Model
     G, _ = get_model.model(args, source_device=source_device, target_device=device)
@@ -222,8 +222,9 @@ def main(_run):
 
                         output_ensembled.append(output_t)
 
-                    output_ensembled = torch.stack(output_ensembled, dim=0)
+                    output_ensembled = torch.cat(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
+
 
                 for e in range(args.batch_size):
                     output_numpy = (

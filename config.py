@@ -22,21 +22,19 @@ def base_config():
 
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
-        output_dir = Path("outputs") / exp_name
-        ckpt_dir = Path("ckpts")  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = Path("runs")  # Runs saved to run_dir / exp_name
+        dump_dir = Path(".")
 
     elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
-        output_dir = image_dir / "outputs" / exp_name
-        ckpt_dir = image_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = image_dir / "runs"  # Runs saved to run_dir / exp_name
+        dump_dir = image_dir
 
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
-        output_dir = image_dir / "outputs" / exp_name
-        ckpt_dir = image_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = image_dir / "runs"  # Runs saved to run_dir / exp_name
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -151,46 +149,10 @@ def base_config():
     device_list = None
 
 
-def hdrnet():
-    exp_name = "hdrnet"
-
-    model = "hdrnet"  # We wont use fft though
-
-
-def guided_filter():
-    exp_name = "guided-filter"
-
-    model = "guided-filter"  # We wont use fft though
-
-
-def guided_filter_l1():
-    exp_name = "guided-filter-l1"
-
-    model = "guided-filter"  # We wont use fft though
-
-
 def guided_filter_l1_tanh():
     exp_name = "guided-filter-l1-tanh"
 
     model = "guided-filter"  # We wont use fft though
-
-
-def guided_filter_l1_tanh_deeper():
-    exp_name = "guided-filter-l1-tanh-deeper"
-
-    batch_size = 4
-    CAN_layers = 9
-
-    model = "guided-filter-deeper"  # We wont use fft though
-
-
-def guided_filter_l1_tanh_gdrn():
-    exp_name = "guided-filter-l1-tanh-gdrn"
-
-    batch_size = 3
-
-    model = "guided-filter-gdrn"  # We wont use fft though
-    pixelshuffle_ratio = 2
 
 
 def guided_filter_l1_tanh_pixelshuffle():
@@ -202,6 +164,36 @@ def guided_filter_l1_tanh_pixelshuffle():
     do_augment = False
 
     model = "guided-filter-pixelshuffle"  # We wont use fft though
+    pixelshuffle_ratio = 2
+
+    dataparallel = True
+    device_list = [0, 1, 2]
+
+
+def guided_filter_l1_tanh_pixelshuffle_eca():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-eca"
+
+    batch_size = 9
+    CAN_layers = 21
+
+    do_augment = False
+    num_epochs = 1024 - 1
+
+    model = "guided-filter-pixelshuffle-eca"  # We wont use fft though
+    pixelshuffle_ratio = 2
+
+    dataparallel = True
+    device_list = [0, 1, 2]
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca"
+
+    batch_size = 9
+
+    do_augment = False
+
+    model = "guided-filter-pixelshuffle-gca"  # We wont use fft though
     pixelshuffle_ratio = 2
 
     dataparallel = True
@@ -221,10 +213,12 @@ def guided_filter_l1_tanh_pixelshuffle_sim():
 
     dataparallel = True
     device_list = [0, 1, 2]
-    num_epochs = 64 - 1
-    finetune = True
+    num_epochs = 128 - 1
+    finetune = False
+
     val_test_epoch_interval = 1
     save_copy_every_epochs = 32
+    log_interval = 80
 
     system = "CFI"
     assert system in ["CFI", "FPM", "Jarvis", "Varun"]
@@ -235,21 +229,19 @@ def guided_filter_l1_tanh_pixelshuffle_sim():
 
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
-        output_dir = Path("outputs") / exp_name
-        ckpt_dir = Path("ckpts")  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = Path("runs")  # Runs saved to run_dir / exp_name
+        dump_dir = Path(".")
 
     elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
-        output_dir = image_dir / "outputs" / exp_name
-        ckpt_dir = image_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = image_dir / "runs"  # Runs saved to run_dir / exp_name
+        dump_dir = image_dir
 
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
-        output_dir = image_dir / "outputs" / exp_name
-        ckpt_dir = image_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = image_dir / "runs"  # Runs saved to run_dir / exp_name
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -306,21 +298,19 @@ def guided_filter_l1_tanh_pixelshuffle_inverse():
 
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
-        output_dir = Path("outputs") / exp_name
-        ckpt_dir = Path("ckpts")  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = Path("runs")  # Runs saved to run_dir / exp_name
+        dump_dir = Path(".")
 
     elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
-        output_dir = image_dir / "outputs" / exp_name
-        ckpt_dir = image_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = image_dir / "runs"  # Runs saved to run_dir / exp_name
+        dump_dir = image_dir
 
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
-        output_dir = image_dir / "outputs" / exp_name
-        ckpt_dir = image_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-        run_dir = image_dir / "runs"  # Runs saved to run_dir / exp_name
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -336,36 +326,66 @@ def guided_filter_l1_tanh_pixelshuffle_inverse():
     test_source_dir = image_dir / "DIV2K_val" / "HQ"
 
 
-def guided_filter_l1_percep_adv():
-    exp_name = "guided-filter-l1-percep-adv"
+def guided_filter_l1_tanh_pixelshuffle_toled():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-toled"
 
-    model = "guided-filter"  # We wont use fft though
+    batch_size = 6
+    CAN_layers = 21
 
-    num_epochs = 512 - 1
+    do_augment = False
+    num_epochs = 1024 - 1
 
-    batch_size = 3
+    model = "guided-filter-pixelshuffle"  # We wont use fft though
+    pixelshuffle_ratio = 2
 
-    log_interval = 30
+    dataparallel = True
+    device_list = [0, 1]
 
-    lpips_device = "cuda:1" if torch.cuda.is_available() else "cpu"
+    system = "CFI"
+    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
 
-    lambda_adversarial = 0.6
-    lambda_perception = 1.2
-    lambda_image = 1  # l1
+    # ---------------------------------------------------------------------------- #
+    # Directories
+    # ---------------------------------------------------------------------------- #
+
+    if system == "CFI":
+        image_dir = Path("/mnt/ssd/udc/")
+        dump_dir = Path(".")
+
+    elif system == "FPM":
+        image_dir = Path("/media/salman/udc/")
+        dump_dir = image_dir
+
+    elif system == "Jarvis":
+        image_dir = Path("/media/data/salman/udc/")
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    train_source_dir = image_dir / "Toled" / "LQ"
+    train_target_dir = image_dir / "Toled" / "HQ"
+
+    val_source_dir = None
+    val_target_dir = None
+
+    test_source_dir = image_dir / "Toled_val" / "LQ"
 
 
 named_configs = [
-    hdrnet,
-    guided_filter,
-    guided_filter_l1,
     guided_filter_l1_tanh,
-    guided_filter_l1_percep_adv,
-    guided_filter_l1_tanh_deeper,
-    guided_filter_l1_tanh_gdrn,
     guided_filter_l1_tanh_pixelshuffle,
+    guided_filter_l1_tanh_pixelshuffle_eca,
+    guided_filter_l1_tanh_pixelshuffle_gca,
     guided_filter_l1_tanh_pixelshuffle_sim,
     guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_inverse,
+    guided_filter_l1_tanh_pixelshuffle_toled,
 ]
 
 

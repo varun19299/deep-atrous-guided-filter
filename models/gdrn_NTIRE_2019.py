@@ -1,6 +1,5 @@
 from models.subNets import *
-from models.cbam import *
-import torch
+from models.GDRN_utils.cbam import *
 
 
 class ntire_rdb_gd_rir_ver1(nn.Module):

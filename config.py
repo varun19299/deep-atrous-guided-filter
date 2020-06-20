@@ -14,14 +14,17 @@ def base_config():
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
         dump_dir = Path(".")
+        CUDA_VISIBLE_DEVICES = "0,1,2"
 
     elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
         dump_dir = image_dir
+        CUDA_VISIBLE_DEVICES = "0,1"
 
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
         dump_dir = image_dir
+        CUDA_VISIBLE_DEVICES = "1,2,3"
 
     output_dir = dump_dir / "outputs" / exp_name
     ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
@@ -290,63 +293,10 @@ def guided_filter_l1_tanh_pixelshuffle_augment():
     device_list = [0, 1]
 
 
-def guided_filter_l1_tanh_pixelshuffle_inverse():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-inverse"
-
-    batch_size = 6
-    CAN_layers = 15
-    do_augment = True
-
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
-
-    dataparallel = True
-    device_list = [0, 1]
-
-    num_epochs = 256 - 1
-
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
-    # ---------------------------------------------------------------------------- #
-    # Data
-    # ---------------------------------------------------------------------------- #
-
-    train_source_dir = image_dir / "Poled" / "HQ"
-    train_target_dir = image_dir / "Poled" / "LQ"
-
-    val_source_dir = None
-    val_target_dir = None
-
-    # test_source_dir = image_dir / "DIV2K_train" / "HQ"
-    test_source_dir = image_dir / "DIV2K_val" / "HQ"
-
-
 def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-glass"
 
-    batch_size = 3
-    CAN_layers = 21
+    CAN_layers = 5
     do_augment = True
 
     model = "guided-filter-pixelshuffle"
@@ -365,14 +315,17 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
         dump_dir = Path(".")
+        CUDA_VISIBLE_DEVICES = "0,1,2"
 
     elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
         dump_dir = image_dir
+        CUDA_VISIBLE_DEVICES = "0,1"
 
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
         dump_dir = image_dir
+        CUDA_VISIBLE_DEVICES = "1,2,3"
 
     output_dir = dump_dir / "outputs" / exp_name
     ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
@@ -382,7 +335,7 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     # Data
     # ---------------------------------------------------------------------------- #
 
-    train_source_dir = image_dir / "DIV2K" / "GT_train"
+    train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
     train_target_dir = image_dir / "Poled" / "HQ"
 
     val_source_dir = None
@@ -414,14 +367,17 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
     if system == "CFI":
         image_dir = Path("/mnt/ssd/udc/")
         dump_dir = Path(".")
+        CUDA_VISIBLE_DEVICES = "0,1,2"
 
     elif system == "FPM":
         image_dir = Path("/media/salman/udc/")
         dump_dir = image_dir
+        CUDA_VISIBLE_DEVICES = "0,1"
 
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
         dump_dir = image_dir
+        CUDA_VISIBLE_DEVICES = "1,2,3"
 
     output_dir = dump_dir / "outputs" / exp_name
     ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
@@ -431,13 +387,13 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
     # Data
     # ---------------------------------------------------------------------------- #
 
-    train_source_dir = image_dir / "DIV2K" / "GT_train"
+    train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
     train_target_dir = image_dir / "Poled" / "LQ"
 
-    val_source_dir = image_dir / "DIV2K" / "GT_val"
-    val_target_dir = image_dir / "Poled_val" / "LQ"
+    val_source_dir = None
+    val_target_dir = None
 
-    test_source_dir = None
+    test_source_dir = image_dir / "DIV2K" / "GT_val"
 
 
 def guided_filter_l1_tanh_pixelshuffle_toled():
@@ -499,7 +455,6 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca,
     guided_filter_l1_tanh_pixelshuffle_sim,
     guided_filter_l1_tanh_pixelshuffle_augment,
-    guided_filter_l1_tanh_pixelshuffle_inverse,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,
     guided_filter_l1_tanh_pixelshuffle_toled,

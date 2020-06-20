@@ -8,12 +8,15 @@ from collections import defaultdict
 import logging
 import numpy as np
 import os
+import sys
+
+# CUDA_VISIBLE_DEVICES
+os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
 
 # Torch Libs
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-import torch.multiprocessing as mp
 import torch.distributed as dist
 
 # Ignore warnings
@@ -35,7 +38,6 @@ if TYPE_CHECKING:
 
 # Train helpers
 from utils.train_helper import (
-    set_device,
     get_optimisers,
     load_models,
     save_weights,
@@ -46,26 +48,17 @@ from utils.train_helper import (
 from utils.tupperware import tupperware
 
 # Experiment, add any observers by command line
-ex = Experiment("Unet-Train")
+ex = Experiment("Train")
 ex = initialise(ex)
 
 # local rank 0: for logging, saving ckpts
 is_local_rank_0 = int(os.environ["LOCAL_RANK"]) == 0
-
-# CUDA_VISIBLE_DEVICES
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+if not is_local_rank_0:
+    sys.stdout = open(os.devnull, "w")
 
 # To prevent "RuntimeError: received 0 items of ancdata"
 torch.multiprocessing.set_sharing_strategy("file_system")
 torch.autograd.set_detect_anomaly(True)
-
-
-def setup(rank, world_size):
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "9901"
-
-    # initialize the process group
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
 
 @ex.automain
@@ -73,6 +66,7 @@ def main(_run):
     args = tupperware(_run.config)
     args.distdataparallel = True
 
+    # Dir init
     dir_init(args, is_local_rank_0=is_local_rank_0)
 
     # Ignore warnings
@@ -261,7 +255,7 @@ def main(_run):
 
                     exp_loss += loss_dict
 
-                global_step += args.batch_size
+                global_step += args.batch_size * dist.get_world_size()
 
                 if is_local_rank_0:
                     train_pbar.update(args.batch_size)

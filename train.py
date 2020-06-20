@@ -223,7 +223,8 @@ def main(_run):
                     f"Epoch: {epoch + 1} | Gen loss: {exp_loss.loss_dict['g_loss']:.3f} "
                 )
 
-                if i % 10 == 0:
+                # Write lr rates and metrics
+                if i % (args.log_interval) == 0:
                     gen_lr = g_optimizer.param_groups[0]["lr"]
                     writer.add_scalar("lr/gen", gen_lr, global_step)
 
@@ -233,40 +234,29 @@ def main(_run):
 
                     for metric in exp_loss.loss_dict:
                         writer.add_scalar(
-                            f"Train_Metrics/{metric}",
-                            exp_loss.loss_dict[metric],
-                            global_step,
+                            f"Train_Metrics/{metric}", exp_loss.loss_dict[metric], global_step
                         )
 
-                # Display images
-                if i % (args.log_interval) == 0:
-                    n = np.min([3, args.batch_size])
-                    for e in range(n):
-                        source_vis = source[e].mul(0.5).add(0.5)
-                        target_vis = target[e].mul(0.5).add(0.5)
-                        output_vis = output[e].mul(0.5).add(0.5)
+            # Display images at end of epoch
+            n = np.min([3, args.batch_size])
+            for e in range(n):
+                source_vis = source[e].mul(0.5).add(0.5)
+                target_vis = target[e].mul(0.5).add(0.5)
+                output_vis = output[e].mul(0.5).add(0.5)
 
-                        writer.add_image(
-                            f"Source/Train_{e+1}",
-                            source_vis.cpu().detach(),
-                            global_step,
-                        )
+                writer.add_image(
+                    f"Source/Train_{e+1}", source_vis.cpu().detach(), global_step
+                )
 
-                        writer.add_image(
-                            f"Target/Train_{e + 1}",
-                            target_vis.cpu().detach(),
-                            global_step,
-                        )
+                writer.add_image(
+                    f"Target/Train_{e + 1}", target_vis.cpu().detach(), global_step
+                )
 
-                        writer.add_image(
-                            f"Output/Train_{e + 1}",
-                            output_vis.cpu().detach(),
-                            global_step,
-                        )
+                writer.add_image(
+                    f"Output/Train_{e + 1}", output_vis.cpu().detach(), global_step
+                )
 
-                        writer.add_text(
-                            f"Filename/Train_{e+1}", filename[e], global_step
-                        )
+                writer.add_text(f"Filename/Train_{e+1}", filename[e], global_step)
 
             # Save ckpt at end of epoch
             logging.info(

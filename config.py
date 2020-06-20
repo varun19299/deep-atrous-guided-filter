@@ -139,6 +139,7 @@ def base_config():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     lpips_device = "cuda:0" if torch.cuda.is_available() else "cpu"
     dataparallel = False
+    distdataparallel = False
     device_list = None
 
 
@@ -199,12 +200,17 @@ def guided_filter_l1_tanh_pixelshuffle_eca():
 def guided_filter_l1_tanh_pixelshuffle_gca():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca"
 
-    batch_size = 9
+    batch_size = 6
 
-    do_augment = False
+    do_augment = True
 
     model = "guided-filter-pixelshuffle-gca"
     pixelshuffle_ratio = 2
+
+    num_threads = batch_size * 2
+    log_interval = 25
+
+    val_test_epoch_interval = 6
 
     dataparallel = True
     device_list = [0, 1, 2]

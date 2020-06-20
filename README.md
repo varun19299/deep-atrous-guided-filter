@@ -27,6 +27,13 @@ See `config.py` for exhaustive set of config options. Create a YAML file for tes
 
 ## Train Script
 
+
+## Train Script DDP
+
+python -m torch.distributed.launch --nproc_per_node=3 --use_env=True train_ddp.py with xyz_config {other flags}
+
+
+
 ## Val Script
 
 ## Test Script

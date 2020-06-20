@@ -309,6 +309,8 @@ class DeepGuidedFilterGuidedMapConvGFGDRN(DeepGuidedFilterConvGF):
 def main(_run):
     from torchsummary import summary
 
+    breakpoint()
+
     args = tupperware(_run.config)
     model = DeepGuidedFilterGuidedMapConvGFPixelShuffle(args)
 

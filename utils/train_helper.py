@@ -111,6 +111,7 @@ def load_models(
     d_optimizer: "optim" = None,
     args: "tupperware" = None,
     tag: str = "latest",
+    is_local_rank_0: bool = True,
 ) -> "Tuple[List[nn.module], List[optim], int, int, int]":
 
     names = ["Gen", "Disc"]
@@ -147,13 +148,13 @@ def load_models(
     if args.resume:
         for name, path, model, optimizer in zip(names, paths, models, optimizers):
             if path.is_file():
-                logging.info(
-                    f"Loading checkpoint for {name} from {path} with tag {tag}."
-                )
-
                 checkpoint = torch.load(path, map_location=torch.device("cpu"))
 
                 if model:
+                    if is_local_rank_0:
+                        logging.info(
+                            f"Loading checkpoint for {name} from {path} with tag {tag}."
+                        )
                     load_state_dict(model, checkpoint["state_dict"])
 
                 if not args.finetune:
@@ -171,9 +172,10 @@ def load_models(
                             loss = checkpoint["loss"]
 
             else:
-                logging.info(
-                    f"No checkpoint found for {name} at {path} with tag {tag}."
-                )
+                if model and is_local_rank_0:
+                    logging.info(
+                        f"No checkpoint found for {name} at {path} with tag {tag}."
+                    )
 
     # Best model
     path = args.ckpt_dir / args.exp_name / args.save_filename_G
@@ -182,7 +184,8 @@ def load_models(
         if "loss" in checkpoint:
             loss = checkpoint["loss"]
 
-        logging.info(f"Previous best model has loss of {loss}")
+        if is_local_rank_0:
+            logging.info(f"Previous best model has loss of {loss}")
 
     return models, optimizers, global_step, start_epoch, loss
 
@@ -198,9 +201,11 @@ def save_weights(
     is_min: bool = True,
     args: "tupperware" = None,
     tag: str = "latest",
+    is_local_rank_0: bool = True,
 ):
     if is_min or tag == "latest":
-        logging.info(f"Epoch {epoch + 1} saving weights")
+        if is_local_rank_0:
+            logging.info(f"Epoch {epoch + 1} saving weights")
 
         # Systems for which Epoch 10 saving allowed
         is_sys_allowed = args.system in ["CFI", "Jarvis", "FPM"]
@@ -257,7 +262,8 @@ def save_weights(
             path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
             torch.save(D_state, path_D)
     else:
-        logging.info(f"Epoch {epoch + 1} NOT saving weights")
+        if is_local_rank_0:
+            logging.info(f"Epoch {epoch + 1} NOT saving weights")
 
 
 class SmoothenValue(object):

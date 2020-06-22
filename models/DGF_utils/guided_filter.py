@@ -92,20 +92,38 @@ class GuidedFilter(nn.Module):
 
 
 class ConvGuidedFilter(nn.Module):
-    def __init__(self, radius=1, norm=nn.BatchNorm2d):
+    def __init__(self, radius=1, norm=nn.BatchNorm2d, conv_a_kernel_size: int = 1):
         super(ConvGuidedFilter, self).__init__()
 
         self.box_filter = nn.Conv2d(
             3, 3, kernel_size=3, padding=radius, dilation=radius, bias=False, groups=3
         )
         self.conv_a = nn.Sequential(
-            nn.Conv2d(6, 32, kernel_size=1, bias=False),
+            nn.Conv2d(
+                6,
+                32,
+                kernel_size=conv_a_kernel_size,
+                padding=conv_a_kernel_size // 2,
+                bias=False,
+            ),
             norm(32),
             nn.ReLU(inplace=True),
-            nn.Conv2d(32, 32, kernel_size=1, bias=False),
+            nn.Conv2d(
+                32,
+                32,
+                kernel_size=conv_a_kernel_size,
+                padding=conv_a_kernel_size // 2,
+                bias=False,
+            ),
             norm(32),
             nn.ReLU(inplace=True),
-            nn.Conv2d(32, 3, kernel_size=1, bias=False),
+            nn.Conv2d(
+                32,
+                3,
+                kernel_size=conv_a_kernel_size,
+                padding=conv_a_kernel_size // 2,
+                bias=False,
+            ),
         )
         self.box_filter.weight.data[...] = 1.0
 
@@ -131,5 +149,10 @@ class ConvGuidedFilter(nn.Module):
         ## mean_A; mean_b
         mean_A = F.interpolate(A, (h_hrx, w_hrx), mode="bilinear", align_corners=True)
         mean_b = F.interpolate(b, (h_hrx, w_hrx), mode="bilinear", align_corners=True)
+
+        # To add steering
+        # grid_x, grid_y = torch.meshgrid(torch.arange(h_hrx), torch.arange(w_hrx))
+        # Flatten both
+        # w_ik = gaussian(grid_x,grid_y,C)
 
         return mean_A * x_hr + mean_b

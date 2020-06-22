@@ -84,11 +84,6 @@ def main(_run):
         G, D, g_optimizer, d_optimizer, args
     )
 
-    if args.dataparallel:
-        G = torch.nn.DataParallel(G, device_ids=args.device_list)
-        if args.lambda_adversarial:
-            D = torch.nn.DataParallel(D, device_ids=args.device_list)
-
     writer = SummaryWriter(log_dir=str(args.run_dir / args.exp_name))
     writer.add_text("Args", pprint_args(args))
 

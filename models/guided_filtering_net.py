@@ -220,25 +220,42 @@ class DeepGuidedFilterGuidedMapConvGF(DeepGuidedFilterConvGF):
         )
 
 
-class DeepGuidedFilterGuidedMapConvGFPixelShuffle(DeepGuidedFilterConvGF):
-    def __init__(self, args, radius=1, dilation=0, c=16, layer=5):
-        super(DeepGuidedFilterGuidedMapConvGFPixelShuffle, self).__init__(radius, layer)
+class DeepGuidedFilterGuidedMapConvGFPixelShuffle(nn.Module):
+    def __init__(self, args, radius=1, dilation=0):
+        super(DeepGuidedFilterGuidedMapConvGFPixelShuffle, self).__init__()
+
+        c = args.guided_map_channels
 
         self.guided_map = nn.Sequential(
-            nn.Conv2d(3, c, 1, bias=False)
+            nn.Conv2d(
+                3,
+                c,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+                bias=False,
+            )
             if dilation == 0
             else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
             AdaptiveNorm(c),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(c, 3, 1),
+            nn.Conv2d(
+                c,
+                3,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+            ),
         )
         self.lr = build_lr_net_pixelshuffle(
             args, layer=args.CAN_layers, siren=args.use_SIREN, use_eca=args.use_ECA
         )
-
+        self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
         self.downsample = nn.Upsample(
             scale_factor=0.5, mode="bilinear", align_corners=True
         )
+
+    def init_lr(self, path):
+        checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        load_state_dict(self.lr, checkpoint["state_dict"])
 
     def forward(self, x_hr):
         x_lr = self.downsample(x_hr)
@@ -248,28 +265,44 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffle(DeepGuidedFilterConvGF):
         return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
 
 
-class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(DeepGuidedFilterConvGF):
-    def __init__(self, args, radius=1, dilation=0, c=16, layer=5):
-        super(DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA, self).__init__(
-            radius, layer
-        )
+class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(nn.Module):
+    def __init__(self, args, radius=1, dilation=0):
+        super(DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA, self).__init__()
+
+        c = args.guided_map_channels
 
         self.guided_map = nn.Sequential(
-            nn.Conv2d(3, c, 1, bias=False)
+            nn.Conv2d(
+                3,
+                c,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+                bias=False,
+            )
             if dilation == 0
             else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
             AdaptiveNorm(c),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(c, 3, 1),
+            nn.Conv2d(
+                c,
+                3,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+            ),
         )
         self.lr = GCANet(
             in_c=3 * args.pixelshuffle_ratio ** 2,
             out_c=3 * args.pixelshuffle_ratio ** 2,
         )
+        self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
 
         self.downsample = nn.Upsample(
             scale_factor=0.5, mode="bilinear", align_corners=True
         )
+
+    def init_lr(self, path):
+        checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        load_state_dict(self.lr, checkpoint["state_dict"])
 
     def forward(self, x_hr):
         x_lr = self.downsample(x_hr)
@@ -280,18 +313,32 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(DeepGuidedFilterConvGF):
 
 
 class DeepGuidedFilterGuidedMapConvGFGDRN(DeepGuidedFilterConvGF):
-    def __init__(self, args, radius=1, dilation=0, c=16, layer=5):
+    def __init__(self, args, radius=1, dilation=0, layer=5):
         super(DeepGuidedFilterGuidedMapConvGFGDRN, self).__init__(radius, layer)
 
+        c = args.guided_map_channels
+
         self.guided_map = nn.Sequential(
-            nn.Conv2d(3, c, 1, bias=False)
+            nn.Conv2d(
+                3,
+                c,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+                bias=False,
+            )
             if dilation == 0
             else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
             AdaptiveNorm(c),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(c, 3, 1),
+            nn.Conv2d(
+                c,
+                3,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+            ),
         )
         self.lr = ntire_rdb_gd_rir_ver2(input_channel=12, numofrdb=12)
+        self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
 
         self.downsample = nn.Upsample(
             scale_factor=0.25, mode="bilinear", align_corners=True
@@ -308,10 +355,16 @@ class DeepGuidedFilterGuidedMapConvGFGDRN(DeepGuidedFilterConvGF):
 @ex.automain
 def main(_run):
     from torchsummary import summary
-
-    breakpoint()
+    from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
     model = DeepGuidedFilterGuidedMapConvGFPixelShuffle(args)
 
+    ckpt = torch.load(
+        args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"
+    )
+    load_state_dict(model, ckpt["state_dict"])
+
+    lr_state = {"state_dict": model.lr.state_dict()}
+    torch.save(lr_state, args.ckpt_dir / args.exp_name / "lr_latest.pth")
     summary(model, (3, 1024, 2048))

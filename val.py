@@ -60,7 +60,7 @@ def main(_run):
 
     # Get data
     data = get_dataloaders(args)
-    data.val_loader = data.train_loader
+    # data.val_loader = data.train_loader
 
     # Model
     G, _ = get_model.model(args, source_device=source_device, target_device=device)
@@ -166,7 +166,7 @@ def main(_run):
                     # Dump to output folder
                     # Phase and amplitude are nested
                     name = filename[e]
-                    path_output = val_path / ("output_" + name)
+                    path_output = val_path / name
 
                     cv2.imwrite(
                         str(path_output),
@@ -225,7 +225,6 @@ def main(_run):
                     output_ensembled = torch.cat(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
-
                 for e in range(args.batch_size):
                     output_numpy = (
                         output[e]
@@ -239,7 +238,7 @@ def main(_run):
 
                     # Dump to output folder
                     name = filename[e]
-                    path_output = test_path / ("output_" + name)
+                    path_output = test_path / name
 
                     cv2.imwrite(
                         str(path_output),

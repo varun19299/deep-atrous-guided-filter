@@ -10,9 +10,6 @@ import numpy as np
 import os
 import sys
 
-# CUDA_VISIBLE_DEVICES
-os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
-
 # Torch Libs
 import torch
 import torch.nn.functional as F
@@ -280,28 +277,36 @@ def main(_run):
                             global_step,
                         )
 
+                    # Display images at end of epoch
+                    n = np.min([3, args.batch_size])
+                    for e in range(n):
+                        source_vis = source[e].mul(0.5).add(0.5)
+                        target_vis = target[e].mul(0.5).add(0.5)
+                        output_vis = output[e].mul(0.5).add(0.5)
+
+                        writer.add_image(
+                            f"Source/Train_{e + 1}",
+                            source_vis.cpu().detach(),
+                            global_step,
+                        )
+
+                        writer.add_image(
+                            f"Target/Train_{e + 1}",
+                            target_vis.cpu().detach(),
+                            global_step,
+                        )
+
+                        writer.add_image(
+                            f"Output/Train_{e + 1}",
+                            output_vis.cpu().detach(),
+                            global_step,
+                        )
+
+                        writer.add_text(
+                            f"Filename/Train_{e + 1}", filename[e], global_step
+                        )
+
             if is_local_rank_0:
-                # Display images at end of epoch
-                n = np.min([3, args.batch_size])
-                for e in range(n):
-                    source_vis = source[e].mul(0.5).add(0.5)
-                    target_vis = target[e].mul(0.5).add(0.5)
-                    output_vis = output[e].mul(0.5).add(0.5)
-
-                    writer.add_image(
-                        f"Source/Train_{e+1}", source_vis.cpu().detach(), global_step
-                    )
-
-                    writer.add_image(
-                        f"Target/Train_{e + 1}", target_vis.cpu().detach(), global_step
-                    )
-
-                    writer.add_image(
-                        f"Output/Train_{e + 1}", output_vis.cpu().detach(), global_step
-                    )
-
-                    writer.add_text(f"Filename/Train_{e+1}", filename[e], global_step)
-
                 # Save ckpt at end of epoch
                 logging.info(
                     f"Saving weights at epoch {epoch + 1} global step {global_step}"

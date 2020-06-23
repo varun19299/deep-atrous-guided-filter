@@ -61,7 +61,6 @@ torch.autograd.set_detect_anomaly(True)
 @ex.automain
 def main(_run):
     args = tupperware(_run.config)
-    args.distdataparallel = True
 
     # Dir init
     dir_init(args, is_local_rank_0=is_local_rank_0)
@@ -71,16 +70,17 @@ def main(_run):
         warnings.filterwarnings("ignore")
 
     # Mutli GPUS Setup
-    rank = int(os.environ["LOCAL_RANK"])
-    torch.cuda.set_device(rank)
-    torch.distributed.init_process_group(backend="nccl", init_method="env://")
+    if args.distdataparallel:
+        rank = int(os.environ["LOCAL_RANK"])
+        torch.cuda.set_device(rank)
+        torch.distributed.init_process_group(backend="nccl", init_method="env://")
+    else:
+        rank = args.device
 
     # Get data
     data = get_dataloaders(args, is_local_rank_0=is_local_rank_0)
 
     # Model
-    # source_device: where D, VGG are placed
-    # target_device: where G, data are placed. Typically cuda:0
     G, D = get_model.model(args)
 
     # Init the Low Res network
@@ -103,14 +103,15 @@ def main(_run):
         G, D, g_optimizer, d_optimizer, args, is_local_rank_0=is_local_rank_0
     )
 
-    # Wrap with Distributed Data Parallel
-    G = torch.nn.parallel.DistributedDataParallel(
-        G, device_ids=[rank], output_device=rank
-    )
-    if args.lambda_adversarial:
-        D = torch.nn.parallel.DistributedDataParallel(
-            D, device_ids=[rank], output_device=rank
+    if args.distdataparallel:
+        # Wrap with Distributed Data Parallel
+        G = torch.nn.parallel.DistributedDataParallel(
+            G, device_ids=[rank], output_device=rank
         )
+        if args.lambda_adversarial:
+            D = torch.nn.parallel.DistributedDataParallel(
+                D, device_ids=[rank], output_device=rank
+            )
 
     # Log no of GPUs
     if is_local_rank_0:
@@ -139,7 +140,9 @@ def main(_run):
 
     # Initialise losses
     g_loss = GLoss(args, rank, perception_device=rank)
-    d_loss = DLoss(args)
+
+    if args.lambda_adversarial:
+        d_loss = DLoss(args)
 
     # Compatibility with checkpoints without global_step
     if not global_step:
@@ -155,6 +158,7 @@ def main(_run):
             "adversarial_loss": 0.0,
             "perception_loss": 0.0,
             "image_loss": 0.0,
+            "ms_ssim_loss": 0.0,
             "train_PSNR": 0.0,
         }
 
@@ -229,7 +233,7 @@ def main(_run):
                         target=target,
                     )
                 else:
-                    g_loss(output=output, target=target, pretrain=True)
+                    g_loss(output=output, target=target)
 
                 g_loss.total_loss.backward()
                 g_optimizer.step()
@@ -238,17 +242,19 @@ def main(_run):
 
                 if args.lambda_adversarial:
                     d_lr_scheduler.step(
-                        epoch - args.pretrain_epochs + i / len(data.train_loader)
+                        epoch - + i / len(data.train_loader)
                     )
 
                 if is_local_rank_0:
                     # Train PSNR
                     loss_dict["train_PSNR"] += PSNR(output, target)
+
                     # Accumulate all losses
                     loss_dict["g_loss"] += g_loss.total_loss.item()
                     loss_dict["adversarial_loss"] += g_loss.adversarial_loss.item()
                     loss_dict["perception_loss"] += g_loss.perception_loss.item()
                     loss_dict["image_loss"] += g_loss.image_loss.item()
+                    loss_dict["ms_ssim_loss"] += g_loss.ms_ssim_loss.item()
 
                     exp_loss += loss_dict
 
@@ -366,7 +372,7 @@ def main(_run):
                                 target=target,
                             )
                         else:
-                            g_loss(output=output, target=target, pretrain=True)
+                            g_loss(output=output, target=target)
 
                         if is_local_rank_0:
                             metrics_dict["g_loss"] += g_loss.total_loss.item()

@@ -1,16 +1,13 @@
 sacred
 numpy
 opencv-contrib-python
-pyyaml
-pymongo
 matplotlib
 tqdm
 h5py
 future
-tensorboardX
-tensorboard
 scipy
 recordclass
 scikit-image
 torchsummary
 common
+pytorch-msssim

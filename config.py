@@ -131,6 +131,7 @@ def base_config():
     lambda_adversarial = 0.0
     lambda_perception = 0.0
     lambda_image = 1  # l1
+    lambda_ms_ssim = 0.0
 
     resume = True
     finetune = False  # Wont load loss or epochs
@@ -141,9 +142,6 @@ def base_config():
     # choose cpu or cuda:0 device
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     lpips_device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
-    # dataparallel = False
-    # device_list = None
     distdataparallel = False
 
 
@@ -181,6 +179,23 @@ def guided_filter_l1_tanh_pixelshuffle_5x5():
 
     model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
+
+
+def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-5x5-ms-ssim"
+
+    batch_size = 2
+    num_epochs = 1024 - 1
+    do_augment = True
+
+    CAN_layers = 21
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
+
+    lambda_image = 1 - 0.84
+    lambda_ms_ssim = 0.84
 
 
 def guided_filter_l1_tanh_pixelshuffle_siren():
@@ -530,6 +545,7 @@ named_configs = [
     guided_filter_l1_tanh,
     guided_filter_l1_tanh_pixelshuffle,
     guided_filter_l1_tanh_pixelshuffle_5x5,
+    guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim,
     guided_filter_l1_tanh_pixelshuffle_sim,
     guided_filter_l1_tanh_pixelshuffle_siren,
     guided_filter_l1_tanh_pixelshuffle_eca,

@@ -2,9 +2,12 @@ from typing import TYPE_CHECKING
 from collections import namedtuple
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 from torchvision import models
 
-import torch.nn.functional as F
+from pytorch_msssim import MS_SSIM
+from pytorch_msssim.ssim import gaussian_filter, _fspecial_gauss_1d
 
 if TYPE_CHECKING:
     from utils.typing_alias import *
@@ -51,7 +54,13 @@ class GLoss(nn.modules.Module):
             size=(256, 512), mode="bilinear", align_corners=True
         )
 
-        if self.args.lambda_perception:
+        if args.lambda_ms_ssim:
+            self.ms_ssim_module = MS_SSIM(
+                data_range=1.0, size_average=True, channel=3
+            ).to(self.device)
+            self.win = _fspecial_gauss_1d(11, 1.5).to(self.device)
+
+        if args.lambda_perception:
             self.LossNetwork = Vgg16FeatureExtractor().to(perception_device)
             self.LossNetwork.eval()
 
@@ -74,29 +83,43 @@ class GLoss(nn.modules.Module):
         real_logit: "Tensor" = [],
         output: "Tensor" = [],
         target: "Tensor" = [],
-        pretrain: bool = False,
     ):
-        self.total_loss = torch.tensor(0.0).to(self.device)
+        device = self.device
 
-        self.adversarial_loss = torch.tensor(0.0).to(self.device)
-        self.perception_loss = torch.tensor(0.0).to(self.device)
-        self.image_loss = torch.tensor(0.0).to(self.device)
+        self.total_loss = torch.tensor(0.0).to(device)
+        self.adversarial_loss = torch.tensor(0.0).to(device)
+        self.perception_loss = torch.tensor(0.0).to(device)
+        self.image_loss = torch.tensor(0.0).to(device)
+        self.ms_ssim_loss = torch.tensor(0.0).to(device)
 
-        device = output.device
-
-        # During pretrain only MSE
-
+        # L1
         if self.args.lambda_image:
-            self.image_loss += F.l1_loss(output, target).mean() * self.args.lambda_image
+            l1_diff = torch.abs(output - target)
+            if self.args.lambda_ms_ssim:
+                # Blur l1
+                _, C, _, _ = l1_diff.shape
+                win = self.win.repeat(C, 1, 1, 1)
+                l1_diff = gaussian_filter(l1_diff, win)
 
+            self.image_loss += l1_diff.mean() * self.args.lambda_image
+
+        # VGG 19
         if self.args.lambda_perception:
             self.perception_loss += (
                 self._perception_metric(output, target).to(device)
                 * self.args.lambda_perception
             )
 
-        if len(fake_logit):
+        # https://github.com/VainF/pytorch-msssim
+        if self.args.lambda_ms_ssim:
+            self.ms_ssim_loss += (
+                1
+                - self.ms_ssim_module(
+                    output.mul(0.5).add(0.5), target.mul(0.5).add(0.5)
+                )
+            ) * self.args.lambda_ms_ssim
 
+        if self.args.lambda_adversarial:
             if self.args.gan_type == "NSGAN":
                 self.adversarial_loss += (
                     F.binary_cross_entropy_with_logits(
@@ -122,7 +145,10 @@ class GLoss(nn.modules.Module):
                 self.adversarial_loss /= 2.0
 
         self.total_loss += (
-            self.adversarial_loss + self.image_loss + self.perception_loss
+            self.adversarial_loss
+            + self.image_loss
+            + self.perception_loss
+            + self.ms_ssim_loss
         )
 
         return self.total_loss

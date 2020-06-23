@@ -94,14 +94,14 @@ class GLoss(nn.modules.Module):
 
         # L1
         if self.args.lambda_image:
-            l1_diff = torch.abs(output - target)
-            if self.args.lambda_ms_ssim:
-                # Blur l1
-                _, C, _, _ = l1_diff.shape
-                win = self.win.repeat(C, 1, 1, 1)
-                l1_diff = gaussian_filter(l1_diff, win)
+            # l1_diff = torch.abs(output - target)
+            # if self.args.lambda_ms_ssim:
+            #     # Blur l1
+            #     _, C, _, _ = l1_diff.shape
+            #     win = self.win.repeat(C, 1, 1, 1)
+            #     l1_diff = gaussian_filter(l1_diff, win)
 
-            self.image_loss += l1_diff.mean() * self.args.lambda_image
+            self.image_loss += F.l1_loss(output, target).mean() * self.args.lambda_image
 
         # VGG 19
         if self.args.lambda_perception:

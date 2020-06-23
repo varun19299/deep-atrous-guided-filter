@@ -197,6 +197,10 @@ def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
     lambda_image = 1 - 0.84
     lambda_ms_ssim = 0.84
 
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
 
 def guided_filter_l1_tanh_pixelshuffle_siren():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-siren"

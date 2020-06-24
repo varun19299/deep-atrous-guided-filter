@@ -332,6 +332,28 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5():
     val_test_epoch_interval = 6
 
 
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-ssim"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 1024 - 1
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+
 def guided_filter_l1_tanh_pixelshuffle_sim():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-sim"
 
@@ -557,6 +579,7 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
     guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,

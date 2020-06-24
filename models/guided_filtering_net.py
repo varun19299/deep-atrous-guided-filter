@@ -6,6 +6,7 @@ from utils.ops import unpixel_shuffle
 
 from models.gdrn_NTIRE_2019 import ntire_rdb_gd_rir_ver2
 from models.gca_net import GCANet
+from models.gca_net_improved import GCANet_improved
 
 # Deep Guided Filter (DGF) utils
 from models.DGF_utils.guided_filter import FastGuidedFilter, ConvGuidedFilter
@@ -312,6 +313,53 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(nn.Module):
         return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
 
 
+class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(nn.Module):
+    def __init__(self, args, radius=1, dilation=0):
+        super(DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved, self).__init__()
+
+        c = args.guided_map_channels
+
+        self.guided_map = nn.Sequential(
+            nn.Conv2d(
+                3,
+                c,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+                bias=False,
+            )
+            if dilation == 0
+            else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
+            AdaptiveNorm(c),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(
+                c,
+                3,
+                kernel_size=args.guided_map_kernel_size,
+                padding=args.guided_map_kernel_size // 2,
+            ),
+        )
+        self.lr = GCANet_improved(
+            in_c=3 * args.pixelshuffle_ratio ** 2,
+            out_c=3 * args.pixelshuffle_ratio ** 2,
+        )
+        self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
+
+        self.downsample = nn.Upsample(
+            scale_factor=0.5, mode="bilinear", align_corners=True
+        )
+
+    def init_lr(self, path):
+        checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        load_state_dict(self.lr, checkpoint["state_dict"])
+
+    def forward(self, x_hr):
+        x_lr = self.downsample(x_hr)
+        x_lr_unpixelshuffled = unpixel_shuffle(x_lr, 2)
+        y_lr = F.pixel_shuffle(self.lr(x_lr_unpixelshuffled), 2)
+
+        return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
+
+
 class DeepGuidedFilterGuidedMapConvGFGDRN(DeepGuidedFilterConvGF):
     def __init__(self, args, radius=1, dilation=0, layer=5):
         super(DeepGuidedFilterGuidedMapConvGFGDRN, self).__init__(radius, layer)
@@ -355,16 +403,20 @@ class DeepGuidedFilterGuidedMapConvGFGDRN(DeepGuidedFilterConvGF):
 @ex.automain
 def main(_run):
     from torchsummary import summary
-    from utils.model_serialization import load_state_dict
+
+    # from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffle(args)
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(args)
 
-    ckpt = torch.load(
-        args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"
-    )
-    load_state_dict(model, ckpt["state_dict"])
+    # model = build_lr_net_pixelshuffle(args, layer=9)
+    # summary(model, (12, 256, 512))
 
-    lr_state = {"state_dict": model.lr.state_dict()}
-    torch.save(lr_state, args.ckpt_dir / args.exp_name / "lr_latest.pth")
+    # ckpt = torch.load(
+    #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"
+    # )
+    # load_state_dict(model, ckpt["state_dict"])
+    #
+    # lr_state = {"state_dict": model.lr.state_dict()}
+    # torch.save(lr_state, args.ckpt_dir / args.exp_name / "lr_latest.pth")
     summary(model, (3, 1024, 2048))

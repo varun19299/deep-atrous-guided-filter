@@ -407,10 +407,10 @@ def main(_run):
     # from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(args)
+    # model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(args)
 
-    # model = build_lr_net_pixelshuffle(args, layer=9)
-    # summary(model, (12, 256, 512))
+    model = build_lr_net_pixelshuffle(args, layer=21)
+    summary(model, (12, 256, 512))
 
     # ckpt = torch.load(
     #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"
@@ -419,4 +419,4 @@ def main(_run):
     #
     # lr_state = {"state_dict": model.lr.state_dict()}
     # torch.save(lr_state, args.ckpt_dir / args.exp_name / "lr_latest.pth")
-    summary(model, (3, 1024, 2048))
+    # summary(model, (3, 1024, 2048))

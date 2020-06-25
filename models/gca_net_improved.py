@@ -20,6 +20,7 @@ from models.DGF_utils.weights_init import (
     weights_init_identity,
     weights_init_identity_pixelshuffle,
 )
+from models.DGF_utils.adaptive_norm import AdaptiveInstanceNorm
 
 
 class ShareSepConv(nn.Module):
@@ -54,7 +55,7 @@ class SmoothDilatedResidualBlock(nn.Module):
             groups=group,
             bias=False,
         )
-        self.norm1 = nn.InstanceNorm2d(channel_num, affine=True)
+        self.norm1 = AdaptiveInstanceNorm(channel_num)
         self.pre_conv2 = ShareSepConv(dilation - 1)
         self.conv2 = nn.Conv2d(
             channel_num,
@@ -66,7 +67,7 @@ class SmoothDilatedResidualBlock(nn.Module):
             groups=group,
             bias=False,
         )
-        self.norm2 = nn.InstanceNorm2d(channel_num, affine=True)
+        self.norm2 = AdaptiveInstanceNorm(channel_num)
 
     def forward(self, x):
         y = F.leaky_relu(self.norm1(self.conv1(self.pre_conv1(x))), 0.2)
@@ -87,7 +88,7 @@ class ResidualBlock(nn.Module):
             groups=group,
             bias=False,
         )
-        self.norm1 = nn.InstanceNorm2d(channel_num, affine=True)
+        self.norm1 = AdaptiveInstanceNorm(channel_num)
         self.conv2 = nn.Conv2d(
             channel_num,
             channel_num,
@@ -98,7 +99,7 @@ class ResidualBlock(nn.Module):
             groups=group,
             bias=False,
         )
-        self.norm2 = nn.InstanceNorm2d(channel_num, affine=True)
+        self.norm2 = AdaptiveInstanceNorm(channel_num)
 
     def forward(self, x):
         y = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
@@ -114,7 +115,7 @@ class GCANet_improved(nn.Module):
         residual_adds = 3
 
         self.conv1 = nn.Conv2d(in_c, interm_channels, 3, 1, 1, bias=False)
-        self.norm1 = nn.InstanceNorm2d(interm_channels, affine=True)
+        self.norm1 = AdaptiveInstanceNorm(interm_channels)
 
         self.res1 = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 1)
 
@@ -136,7 +137,7 @@ class GCANet_improved(nn.Module):
         )
 
         self.deconv2 = nn.Conv2d(interm_channels, interm_channels, 3, 1, 1)
-        self.norm5 = nn.InstanceNorm2d(interm_channels, affine=True)
+        self.norm5 = AdaptiveInstanceNorm(interm_channels)
         self.deconv1 = nn.Conv2d(interm_channels, out_c, 1)
 
         self.apply(weights_init_identity_pixelshuffle)

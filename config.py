@@ -132,6 +132,10 @@ def base_config():
     lambda_perception = 0.0
     lambda_image = 1  # l1
     lambda_ms_ssim = 0.0
+    lambda_CoBi_RGB = 0.0  # https://arxiv.org/pdf/1905.05169.pdf
+
+    cobi_rgb_patch_size = 24
+    cobi_rgb_stride = 24
 
     resume = True
     finetune = False  # Wont load loss or epochs
@@ -200,33 +204,6 @@ def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
     # Cosine annealing
     T_0 = 64
     T_mult = 2
-
-
-def guided_filter_l1_tanh_pixelshuffle_siren():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-siren"
-
-    batch_size = 3
-    CAN_layers = 21
-
-    do_augment = True
-
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
-    use_SIREN = True
-
-
-def guided_filter_l1_tanh_pixelshuffle_eca():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-eca"
-
-    batch_size = 2
-    CAN_layers = 21
-
-    do_augment = False
-    num_epochs = 1024 - 1
-
-    model = "guided-filter-pixelshuffle"
-    use_ECA = True
-    pixelshuffle_ratio = 2
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca():
@@ -333,7 +310,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5():
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-ssim"
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved"
 
     batch_size = 2
     do_augment = True
@@ -348,10 +325,46 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     num_threads = batch_size * 2
     log_interval = 25
     val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
 
     # Cosine annealing
     T_0 = 64
     T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-contextual"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 960 - 1
+    learning_rate = 3e-5
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-5
+
+    # Loss
+    lambda_image = 0.0  # l1
+    lambda_CoBi_RGB = 1.0
+
+    cobi_rgb_patch_size = 8
+    cobi_rgb_stride = 8
 
 
 def guided_filter_l1_tanh_pixelshuffle_sim():
@@ -424,15 +437,16 @@ def guided_filter_l1_tanh_pixelshuffle_augment():
 
 
 def guided_filter_l1_tanh_pixelshuffle_forward_glass():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-glass-conv"
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-glass-contextual"
 
-    CAN_layers = 21
+    CAN_layers = 7
     do_augment = True
 
-    model = "guided-filter"
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
 
-    batch_size = 3
-    num_epochs = 127 - 1
+    batch_size = 2
+    num_epochs = 255 - 1
 
     system = "CFI"
     assert system in ["CFI", "FPM", "Jarvis", "Varun"]
@@ -457,10 +471,7 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
     run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
 
-    # ---------------------------------------------------------------------------- #
     # Data
-    # ---------------------------------------------------------------------------- #
-
     train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
     train_target_dir = image_dir / "Poled" / "HQ"
 
@@ -470,17 +481,22 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     # test_source_dir = image_dir / "Sim_train" / "GT"
     test_source_dir = image_dir / "Sim_val" / "GT"
 
+    # Loss
+    lambda_image = 0.0  # l1
+    lambda_CoBi_RGB = 1.0
+
 
 def guided_filter_l1_tanh_pixelshuffle_forward_poled():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-poled-conv"
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-poled-contextual"
 
     batch_size = 3
-    CAN_layers = 15
+    CAN_layers = 7
     do_augment = True
 
-    model = "guided-filter"
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
 
-    num_epochs = 127 - 1
+    num_epochs = 255 - 1
 
     system = "CFI"
     assert system in ["CFI", "FPM", "Jarvis", "Varun"]
@@ -518,53 +534,9 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
     # test_source_dir = image_dir / "Sim_train" / "GT"
     test_source_dir = image_dir / "Sim_val" / "GT"
 
-
-def guided_filter_l1_tanh_pixelshuffle_toled():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-toled"
-
-    batch_size = 3
-    CAN_layers = 21
-
-    do_augment = False
-    num_epochs = 1024 - 1
-
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
-
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
-    # ---------------------------------------------------------------------------- #
-    # Data
-    # ---------------------------------------------------------------------------- #
-
-    train_source_dir = image_dir / "Toled" / "LQ"
-    train_target_dir = image_dir / "Toled" / "HQ"
-
-    val_source_dir = None
-    val_target_dir = None
-
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    # Loss
+    lambda_image = 0.0  # l1
+    lambda_CoBi_RGB = 1.0
 
 
 named_configs = [
@@ -573,17 +545,15 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_5x5,
     guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim,
     guided_filter_l1_tanh_pixelshuffle_sim,
-    guided_filter_l1_tanh_pixelshuffle_siren,
-    guided_filter_l1_tanh_pixelshuffle_eca,
     guided_filter_l1_tanh_pixelshuffle_gca,
     guided_filter_l1_tanh_pixelshuffle_gca_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual,
     guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,
-    guided_filter_l1_tanh_pixelshuffle_toled,
 ]
 
 

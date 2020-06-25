@@ -49,7 +49,10 @@ ex = Experiment("Train")
 ex = initialise(ex)
 
 # local rank 0: for logging, saving ckpts
-is_local_rank_0 = int(os.environ["LOCAL_RANK"]) == 0
+if "LOCAL_RANK" in os.environ:
+    is_local_rank_0 = int(os.environ["LOCAL_RANK"]) == 0
+else:
+    is_local_rank_0 = True
 if not is_local_rank_0:
     sys.stdout = open(os.devnull, "w")
 
@@ -74,8 +77,10 @@ def main(_run):
         rank = int(os.environ["LOCAL_RANK"])
         torch.cuda.set_device(rank)
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
+        world_size = dist.get_world_size()
     else:
         rank = args.device
+        world_size = 1
 
     # Get data
     data = get_dataloaders(args, is_local_rank_0=is_local_rank_0)
@@ -159,6 +164,7 @@ def main(_run):
             "perception_loss": 0.0,
             "image_loss": 0.0,
             "ms_ssim_loss": 0.0,
+            "cobi_rgb_loss": 0.0,
             "train_PSNR": 0.0,
         }
 
@@ -177,7 +183,8 @@ def main(_run):
             if is_local_rank_0:
                 train_pbar.reset()
 
-            data.train_loader.sampler.set_epoch(epoch)
+            if args.distdataparallel:
+                data.train_loader.sampler.set_epoch(epoch)
 
             for i, batch in enumerate(data.train_loader):
                 # allows for interrupted training
@@ -241,9 +248,7 @@ def main(_run):
                 g_lr_scheduler.step(epoch + i / len(data.train_loader))
 
                 if args.lambda_adversarial:
-                    d_lr_scheduler.step(
-                        epoch - + i / len(data.train_loader)
-                    )
+                    d_lr_scheduler.step(epoch - +i / len(data.train_loader))
 
                 if is_local_rank_0:
                     # Train PSNR
@@ -255,10 +260,11 @@ def main(_run):
                     loss_dict["perception_loss"] += g_loss.perception_loss.item()
                     loss_dict["image_loss"] += g_loss.image_loss.item()
                     loss_dict["ms_ssim_loss"] += g_loss.ms_ssim_loss.item()
+                    loss_dict["cobi_rgb_loss"] += g_loss.cobi_rgb_loss.item()
 
                     exp_loss += loss_dict
 
-                global_step += args.batch_size * dist.get_world_size()
+                global_step += args.batch_size * world_size
 
                 if is_local_rank_0:
                     train_pbar.update(args.batch_size)

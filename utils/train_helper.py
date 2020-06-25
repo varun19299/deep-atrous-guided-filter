@@ -74,14 +74,14 @@ def get_optimisers(
     if args.lr_scheduler == "cosine":
         if g_optimizer:
             g_lr_scheduler = CosineAnnealingWarmRestarts(
-                optimizer=g_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-7
+                optimizer=g_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-10
             )
         else:
             g_lr_scheduler = None
 
         if d_optimizer:
             d_lr_scheduler = CosineAnnealingWarmRestarts(
-                optimizer=d_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-7
+                optimizer=d_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-10
             )
         else:
             d_lr_scheduler = None

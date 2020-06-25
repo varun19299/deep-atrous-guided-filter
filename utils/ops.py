@@ -19,19 +19,26 @@ def sample_patches(
     inputs: torch.Tensor, patch_size: int = 3, stride: int = 2
 ) -> torch.Tensor:
     """
+
+    :param inputs: the input feature maps, shape: (n, c, h, w).
+    :param patch_size: the spatial size of sampled patches
+    :param stride: the stride of sampling.
+    :return: extracted patches, shape: (n, c, patch_size, patch_size, n_patches).
+    """
+    """
     Patch sampler for feature maps.
     Parameters
     ---
     inputs : torch.Tensor
-        the input feature maps, shape: (c, h, w).
+        
     patch_size : int, optional
-        the spatial size of sampled patches
+       
     stride : int, optional
-        the stride of sampling.
+        
     Returns
     ---
     patches : torch.Tensor
-        extracted patches, shape: (c, patch_size, patch_size, n_patches).
+        
     """
 
     n, c, h, w = inputs.shape

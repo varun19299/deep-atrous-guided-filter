@@ -134,8 +134,8 @@ def base_config():
     lambda_ms_ssim = 0.0
     lambda_CoBi_RGB = 0.0  # https://arxiv.org/pdf/1905.05169.pdf
 
-    cobi_rgb_patch_size = 24
-    cobi_rgb_stride = 24
+    cobi_rgb_patch_size = 8
+    cobi_rgb_stride = 8
 
     resume = True
     finetune = False  # Wont load loss or epochs
@@ -334,6 +334,31 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     learning_rate = 3e-4
 
 
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 1024 - 1
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved-FFA"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 1e-4
+
+
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-contextual"
 
@@ -437,7 +462,9 @@ def guided_filter_l1_tanh_pixelshuffle_augment():
 
 
 def guided_filter_l1_tanh_pixelshuffle_forward_glass():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-glass-contextual"
+    exp_name = (
+        "guided-filter-l1-tanh-pixelshuffle-forward-glass-contextual-patch-8-stride-8"
+    )
 
     CAN_layers = 7
     do_augment = True
@@ -478,8 +505,8 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     val_source_dir = None
     val_target_dir = None
 
-    # test_source_dir = image_dir / "Sim_train" / "GT"
-    test_source_dir = image_dir / "Sim_val" / "GT"
+    test_source_dir = image_dir / "Sim_train" / "GT"
+    # test_source_dir = image_dir / "Sim_val" / "GT"
 
     # Loss
     lambda_image = 0.0  # l1
@@ -487,7 +514,9 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
 
 
 def guided_filter_l1_tanh_pixelshuffle_forward_poled():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-forward-poled-contextual"
+    exp_name = (
+        "guided-filter-l1-tanh-pixelshuffle-forward-poled-contextual-patch-8-stride-8"
+    )
 
     batch_size = 3
     CAN_layers = 7
@@ -531,8 +560,8 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
     val_source_dir = None
     val_target_dir = None
 
-    # test_source_dir = image_dir / "Sim_train" / "GT"
-    test_source_dir = image_dir / "Sim_val" / "GT"
+    test_source_dir = image_dir / "Sim_train" / "GT"
+    # test_source_dir = image_dir / "Sim_val" / "GT"
 
     # Loss
     lambda_image = 0.0  # l1
@@ -550,6 +579,7 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual,
     guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,

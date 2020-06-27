@@ -47,6 +47,7 @@ def base_config():
 
     batch_size = 8
     num_threads = batch_size  # parallel workers
+    train_random_patch = False  # extract patches
 
     # augment
     do_augment = True
@@ -334,6 +335,67 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     learning_rate = 3e-4
 
 
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-sim"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 64
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+
+    val_test_epoch_interval = 1
+    save_copy_every_epochs = 6
+
+    system = "CFI"
+    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
+
+    # ---------------------------------------------------------------------------- #
+    # Directories
+    # ---------------------------------------------------------------------------- #
+
+    if system == "CFI":
+        image_dir = Path("/mnt/ssd/udc/")
+        dump_dir = Path(".")
+
+    elif system == "FPM":
+        image_dir = Path("/media/salman/udc/")
+        dump_dir = image_dir
+
+    elif system == "Jarvis":
+        image_dir = Path("/media/data/salman/udc/")
+        dump_dir = image_dir
+
+    output_dir = dump_dir / "outputs" / exp_name
+    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    train_source_dir = image_dir / "Sim_train" / "POLED"
+    train_target_dir = image_dir / "Sim_train" / "Glass"
+
+    val_source_dir = image_dir / "Sim_val" / "POLED"
+    val_target_dir = image_dir / "Sim_val" / "Glass"
+
+    test_source_dir = None
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-5
+
+
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA"
 
@@ -579,6 +641,7 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual,
     guided_filter_l1_tanh_pixelshuffle_augment,

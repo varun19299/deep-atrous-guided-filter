@@ -60,7 +60,7 @@ def main(_run):
 
     # Get data
     data = get_dataloaders(args)
-    # data.val_loader = data.train_loader
+    data.val_loader = data.train_loader
 
     # Model
     G, _ = get_model.model(args, source_device=source_device, target_device=device)

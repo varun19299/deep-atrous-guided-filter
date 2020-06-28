@@ -78,7 +78,7 @@ class SmoothDilatedResidualBlock(nn.Module):
 
 class SmoothDilatedResidualFFABlock(nn.Module):
     def __init__(self, channel_num, dilation=1, group=1):
-        super(SmoothDilatedResidualBlock, self).__init__()
+        super().__init__()
         self.pre_conv1 = ShareSepConv(dilation * 2 - 1)
         self.conv1 = nn.Conv2d(
             channel_num,
@@ -109,7 +109,7 @@ class SmoothDilatedResidualFFABlock(nn.Module):
 
     def forward(self, x):
         y = F.leaky_relu(self.norm1(self.conv1(self.pre_conv1(x))), 0.2)
-        y = self.norm2(self.conv2(self.pre_conv2(y)))
+        y = self.norm2(self.conv2(self.pre_conv2(y + x)))
         y = self.palayer(self.calayer(y))
         return F.leaky_relu(x + y, 0.2)
 
@@ -148,7 +148,7 @@ class ResidualBlock(nn.Module):
 
 class ResidualFFABlock(nn.Module):
     def __init__(self, channel_num, dilation=1, group=1):
-        super(ResidualBlock, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(
             channel_num,
             channel_num,
@@ -177,35 +177,42 @@ class ResidualFFABlock(nn.Module):
 
     def forward(self, x):
         y = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
-        y = self.norm2(self.conv2(y))
+        y = self.norm2(self.conv2(y + x))
         y = self.palayer(self.calayer(y))
         return F.leaky_relu(x + y, 0.2)
 
 
 class GCANet_improved(nn.Module):
-    def __init__(self, in_c=4, out_c=3):
+    def __init__(self, in_c=4, out_c=3, use_FFA: bool = False):
         super(GCANet_improved, self).__init__()
 
         interm_channels = 48
         residual_adds = 3
 
+        if use_FFA:
+            smooth_dialated_block = SmoothDilatedResidualFFABlock
+            residual_block = ResidualFFABlock
+        else:
+            smooth_dialated_block = SmoothDilatedResidualBlock
+            residual_block = ResidualBlock
+
         self.conv1 = nn.Conv2d(in_c, interm_channels, 3, 1, 1, bias=False)
         self.norm1 = AdaptiveInstanceNorm(interm_channels)
 
-        self.res1 = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 1)
+        self.res1 = smooth_dialated_block(interm_channels, dilation=2 ** 1)
 
-        self.res2_a = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 2)
-        self.res2_b = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 2)
+        self.res2_a = smooth_dialated_block(interm_channels, dilation=2 ** 2)
+        self.res2_b = smooth_dialated_block(interm_channels, dilation=2 ** 2)
 
-        self.res3_a = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 3)
-        self.res3_b = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 3)
+        self.res3_a = smooth_dialated_block(interm_channels, dilation=2 ** 3)
+        self.res3_b = smooth_dialated_block(interm_channels, dilation=2 ** 3)
 
-        self.res4_a = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 4)
-        self.res4_b = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 4)
+        self.res4_a = smooth_dialated_block(interm_channels, dilation=2 ** 4)
+        self.res4_b = smooth_dialated_block(interm_channels, dilation=2 ** 4)
 
-        self.res5 = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 5)
+        self.res5 = smooth_dialated_block(interm_channels, dilation=2 ** 5)
 
-        self.res_final = ResidualBlock(interm_channels, dilation=1)
+        self.res_final = residual_block(interm_channels, dilation=1)
 
         self.gate = nn.Conv2d(
             interm_channels * residual_adds, residual_adds, 3, 1, 1, bias=True
@@ -244,30 +251,39 @@ class GCANet_improved(nn.Module):
         return y
 
 
-class GCAFFANet_improved(nn.Module):
-    def __init__(self, in_c=4, out_c=3):
-        super(GCAFFANet_improved, self).__init__()
+class GCANet_improved_deeper(nn.Module):
+    def __init__(self, in_c=4, out_c=3, use_FFA: bool = False):
+        super(GCANet_improved_deeper, self).__init__()
 
         interm_channels = 48
-        residual_adds = 3
+        residual_adds = 4
+
+        if use_FFA:
+            smooth_dialated_block = SmoothDilatedResidualFFABlock
+            residual_block = ResidualFFABlock
+        else:
+            smooth_dialated_block = SmoothDilatedResidualBlock
+            residual_block = ResidualBlock
 
         self.conv1 = nn.Conv2d(in_c, interm_channels, 3, 1, 1, bias=False)
         self.norm1 = AdaptiveInstanceNorm(interm_channels)
 
-        self.res1 = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 1)
+        self.res1_a = smooth_dialated_block(interm_channels, dilation=2 ** 1)
+        self.res1_b = smooth_dialated_block(interm_channels, dilation=2 ** 1)
 
-        self.res2_a = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 2)
-        self.res2_b = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 2)
+        self.res2_a = smooth_dialated_block(interm_channels, dilation=2 ** 2)
+        self.res2_b = smooth_dialated_block(interm_channels, dilation=2 ** 2)
 
-        self.res3_a = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 3)
-        self.res3_b = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 3)
+        self.res3_a = smooth_dialated_block(interm_channels, dilation=2 ** 3)
+        self.res3_b = smooth_dialated_block(interm_channels, dilation=2 ** 3)
 
-        self.res4_a = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 4)
-        self.res4_b = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 4)
+        self.res4_a = smooth_dialated_block(interm_channels, dilation=2 ** 4)
+        self.res4_b = smooth_dialated_block(interm_channels, dilation=2 ** 4)
 
-        self.res5 = SmoothDilatedResidualBlock(interm_channels, dilation=2 ** 5)
+        self.res5_a = smooth_dialated_block(interm_channels, dilation=2 ** 5)
+        self.res5_b = smooth_dialated_block(interm_channels, dilation=2 ** 5)
 
-        self.res_final = ResidualBlock(interm_channels, dilation=1)
+        self.res_final = residual_block(interm_channels, dilation=1)
 
         self.gate = nn.Conv2d(
             interm_channels * residual_adds, residual_adds, 3, 1, 1, bias=True
@@ -277,33 +293,32 @@ class GCAFFANet_improved(nn.Module):
         self.norm5 = AdaptiveInstanceNorm(interm_channels)
         self.deconv1 = nn.Conv2d(interm_channels, out_c, 1)
 
-        self.calayer = CALayer(interm_channels)
-        self.palayer = PALayer(interm_channels)
-
         self.apply(weights_init_identity_pixelshuffle)
 
     def forward(self, x):
         y1 = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
 
-        y = self.res1(y1)
+        y = self.res1_a(y1)
+        y = self.res1_b(y)
         y = self.res2_a(y)
-        y = self.res2_b(y)
-        y2 = self.res3_a(y)
+        y2 = self.res2_b(y)
 
+        y = self.res3_a(y2)
         y = self.res3_b(y)
         y = self.res4_a(y)
-        y = self.res4_b(y)
-        y = self.res5(y)
-        y3 = self.res_final(y)
+        y3 = self.res4_b(y)
 
-        gates = self.gate(torch.cat((y1, y2, y3), dim=1))
+        y = self.res5_a(y3)
+        y = self.res5_b(y)
+        y4 = self.res_final(y)
+
+        gates = self.gate(torch.cat((y1, y2, y3, y4), dim=1))
         gated_y = (
             y1 * gates[:, [0], :, :]
             + y2 * gates[:, [1], :, :]
             + y3 * gates[:, [2], :, :]
+            + y4 * gates[:, [3], :, :]
         )
-
-        gated_y = self.palayer(self.calayer(gated_y))
 
         y = F.leaky_relu(self.norm5(self.deconv2(gated_y)), 0.2)
         y = F.leaky_relu(self.deconv1(y), 0.2)
@@ -318,6 +333,6 @@ def main(_run):
     args = tupperware(_run.config)
 
     # model = GCANet_improved(in_c=12, out_c=12).to(args.device)
-    model = GCAFFANet_improved(in_c=12, out_c=12).to(args.device)
+    model = GCANet_improved(in_c=12, out_c=12, use_FFA=True).to(args.device)
 
     summary(model, (12, 256, 512))

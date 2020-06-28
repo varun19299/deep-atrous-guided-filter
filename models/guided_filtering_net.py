@@ -6,7 +6,7 @@ from utils.ops import unpixel_shuffle
 
 from models.gdrn_NTIRE_2019 import ntire_rdb_gd_rir_ver2
 from models.gca_net import GCANet
-from models.gca_net_improved import GCANet_improved, GCAFFANet_improved
+from models.gca_net_improved import GCANet_improved, GCANet_improved_deeper
 
 # Deep Guided Filter (DGF) utils
 from models.DGF_utils.guided_filter import FastGuidedFilter, ConvGuidedFilter
@@ -314,7 +314,14 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCA(nn.Module):
 
 
 class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(nn.Module):
-    def __init__(self, args, radius=1, dilation=0, use_FFA: bool = False):
+    def __init__(
+        self,
+        args,
+        radius=1,
+        dilation=0,
+        use_FFA: bool = False,
+        use_deeper_GCAN: bool = False,
+    ):
         super(DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved, self).__init__()
 
         c = args.guided_map_channels
@@ -338,16 +345,17 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(nn.Module):
                 padding=args.guided_map_kernel_size // 2,
             ),
         )
-
-        if use_FFA:
-            self.lr = GCAFFANet_improved(
+        if use_deeper_GCAN:
+            self.lr = GCANet_improved_deeper(
                 in_c=3 * args.pixelshuffle_ratio ** 2,
                 out_c=3 * args.pixelshuffle_ratio ** 2,
+                use_FFA=use_FFA,
             )
         else:
             self.lr = GCANet_improved(
                 in_c=3 * args.pixelshuffle_ratio ** 2,
                 out_c=3 * args.pixelshuffle_ratio ** 2,
+                use_FFA=use_FFA,
             )
         self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
 
@@ -414,9 +422,11 @@ def main(_run):
     # from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(args, use_FFA=True)
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(
+        args, use_FFA=True, use_deeper_GCAN=True
+    )
 
-    summary(model, (12, 256, 512))
+    summary(model, (3, 1024, 2048))
 
     # ckpt = torch.load(
     #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"

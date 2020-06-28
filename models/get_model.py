@@ -91,6 +91,19 @@ def model(args, source_device=None, target_device=None):
             ),
         )
 
+    elif args.model == "guided-filter-pixelshuffle-gca-improved-FFA-deeper":
+        return (
+            DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(
+                args, use_FFA=True, use_deeper_GCAN=True
+            ),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
     else:
         logging.info(f"Model {args.model} not implemented.")
         breakpoint()

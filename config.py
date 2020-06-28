@@ -396,15 +396,66 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim():
     learning_rate = 3e-5
 
 
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim_actual():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-sim-actual"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 128
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 128
+    T_mult = 2
+
+    learning_rate = 3e-5
+
+
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA"
 
     batch_size = 2
     do_augment = True
-    num_epochs = 1024 - 1
+    num_epochs = 960
 
     # Model args
     model = "guided-filter-pixelshuffle-gca-improved-FFA"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_deeper():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA-deeper"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 960
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved-FFA-deeper"
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
@@ -642,7 +693,9 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_5x5,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_deeper,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual,
     guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,

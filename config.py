@@ -207,109 +207,6 @@ def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
     T_mult = 2
 
 
-def guided_filter_l1_tanh_pixelshuffle_gca():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca"
-
-    batch_size = 2
-    do_augment = True
-
-    model = "guided-filter-pixelshuffle-gca"
-    pixelshuffle_ratio = 2
-
-    num_threads = batch_size * 2
-    log_interval = 25
-
-    val_test_epoch_interval = 6
-
-
-def guided_filter_l1_tanh_pixelshuffle_gca_sim():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-sim"
-
-    batch_size = 2
-    do_augment = True
-    num_epochs = 16 - 1
-
-    model = "guided-filter-pixelshuffle-gca"
-    pixelshuffle_ratio = 2
-
-    num_threads = batch_size * 2
-    log_interval = 25
-
-    val_test_epoch_interval = 1
-    save_copy_every_epochs = 6
-
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
-    # ---------------------------------------------------------------------------- #
-    # Data
-    # ---------------------------------------------------------------------------- #
-
-    train_source_dir = image_dir / "Sim_train" / "POLED"
-    train_target_dir = image_dir / "Sim_train" / "Glass"
-
-    val_source_dir = image_dir / "Sim_val" / "POLED"
-    val_target_dir = image_dir / "Sim_val" / "Glass"
-
-    test_source_dir = None
-
-
-def guided_filter_l1_tanh_pixelshuffle_gca_sim_actual():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-sim-actual"
-
-    batch_size = 2
-    do_augment = True
-
-    num_epochs = 64 - 1
-    model = "guided-filter-pixelshuffle-gca"
-    pixelshuffle_ratio = 2
-
-    num_threads = batch_size * 2
-    log_interval = 25
-
-    val_test_epoch_interval = 6
-
-
-def guided_filter_l1_tanh_pixelshuffle_gca_5x5():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5"
-
-    batch_size = 2
-    do_augment = True
-
-    # Finetune it
-    num_epochs = 64 - 1
-
-    model = "guided-filter-pixelshuffle-gca"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 5
-    guided_map_channels = 24
-
-    num_threads = batch_size * 2
-    log_interval = 25
-
-    val_test_epoch_interval = 6
-
-
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved"
 
@@ -333,6 +230,36 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     T_mult = 2
 
     learning_rate = 3e-4
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ms_ssim_perceptual():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 128 + 256
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Loss
+    lambda_image = 1 - 0.84
+    lambda_ms_ssim = 0.84
+    lambda_perception = 1.2
+
+    # Cosine annealing
+    T_0 = 128
+    T_mult = 2
+
+    learning_rate = 3e-5
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim():
@@ -505,60 +432,6 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual():
     cobi_rgb_stride = 8
 
 
-def guided_filter_l1_tanh_pixelshuffle_sim():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-sim"
-
-    batch_size = 3
-    CAN_layers = 21
-
-    do_augment = True
-
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
-
-    num_epochs = 128 - 1
-    finetune = False
-
-    val_test_epoch_interval = 1
-    save_copy_every_epochs = 32
-    log_interval = 80
-
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
-    # ---------------------------------------------------------------------------- #
-    # Data
-    # ---------------------------------------------------------------------------- #
-
-    train_source_dir = image_dir / "DIV2K_train" / "LQ"
-    train_target_dir = image_dir / "DIV2K_train" / "HQ"
-
-    val_source_dir = image_dir / "DIV2K_val" / "LQ"
-    val_target_dir = image_dir / "DIV2K_val" / "HQ"
-
-    test_source_dir = None
-
-
 def guided_filter_l1_tanh_pixelshuffle_augment():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-augment"
 
@@ -686,12 +559,8 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle,
     guided_filter_l1_tanh_pixelshuffle_5x5,
     guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim,
-    guided_filter_l1_tanh_pixelshuffle_sim,
-    guided_filter_l1_tanh_pixelshuffle_gca,
-    guided_filter_l1_tanh_pixelshuffle_gca_sim,
-    guided_filter_l1_tanh_pixelshuffle_gca_sim_actual,
-    guided_filter_l1_tanh_pixelshuffle_gca_5x5,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ms_ssim_perceptual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA,

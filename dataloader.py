@@ -14,7 +14,6 @@ import torch
 import torch.distributed as dist
 import cv2
 from config import initialise
-from pathlib import Path
 import random
 
 if TYPE_CHECKING:

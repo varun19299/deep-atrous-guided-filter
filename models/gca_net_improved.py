@@ -10,16 +10,11 @@ import torch.nn.functional as F
 from config import initialise
 from sacred import Experiment
 
-from utils.tupperware import tupperware
-
 ex = Experiment("GACNet")
 
 ex = initialise(ex)
 
-from models.DGF_utils.weights_init import (
-    weights_init_identity,
-    weights_init_identity_pixelshuffle,
-)
+from models.DGF_utils.weights_init import weights_init_identity_pixelshuffle
 from models.DGF_utils.adaptive_norm import AdaptiveInstanceNorm
 from models.FFA_utils import CALayer, PALayer
 
@@ -328,11 +323,11 @@ class GCANet_improved_deeper(nn.Module):
 
 @ex.automain
 def main(_run):
+    from utils.tupperware import tupperware
     from torchsummary import summary
 
     args = tupperware(_run.config)
 
-    # model = GCANet_improved(in_c=12, out_c=12).to(args.device)
     model = GCANet_improved(in_c=12, out_c=12, use_FFA=True).to(args.device)
 
     summary(model, (12, 256, 512))

@@ -5,6 +5,7 @@ from utils.model_serialization import load_state_dict
 from utils.ops import unpixel_shuffle
 
 from models.gca_net_improved import GCANet_improved, GCANet_improved_deeper
+from models.gca_net_improved_eca import GCAECANet_improved
 
 # Deep Guided Filter (DGF) utils
 from models.DGF_utils.guided_filter import FastGuidedFilter, ConvGuidedFilter
@@ -295,18 +296,26 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(nn.Module):
                 padding=args.guided_map_kernel_size // 2,
             ),
         )
+
+        self.lr = GCANet_improved(
+            in_c=3 * args.pixelshuffle_ratio ** 2,
+            out_c=3 * args.pixelshuffle_ratio ** 2,
+            use_FFA=use_FFA,
+        )
+
         if use_deeper_GCAN:
             self.lr = GCANet_improved_deeper(
                 in_c=3 * args.pixelshuffle_ratio ** 2,
                 out_c=3 * args.pixelshuffle_ratio ** 2,
                 use_FFA=use_FFA,
             )
-        else:
-            self.lr = GCANet_improved(
+
+        if args.use_ECA:
+            self.lr = GCAECANet_improved(
                 in_c=3 * args.pixelshuffle_ratio ** 2,
                 out_c=3 * args.pixelshuffle_ratio ** 2,
-                use_FFA=use_FFA,
             )
+
         self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
 
         self.downsample = nn.Upsample(
@@ -332,9 +341,8 @@ def main(_run):
     from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(
-        args, use_FFA=True, use_deeper_GCAN=True
-    )
+    # args.use_ECA = True
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(args, use_FFA=True)
 
     summary(model, (3, 1024, 2048))
 

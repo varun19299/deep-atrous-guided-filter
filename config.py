@@ -216,9 +216,9 @@ def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-increasing"
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper"
 
-    batch_size = 2
+    batch_size = 1
     do_augment = True
     num_epochs = 960
 

@@ -158,18 +158,24 @@ class GCANet_atrous(nn.Module):
         self.conv1 = nn.Conv2d(in_c, interm_channels, 3, 1, 1, bias=False)
         self.norm1 = AdaptiveInstanceNorm(interm_channels)
 
-        self.res1 = smooth_dialated_block(interm_channels, dialation_start=1)
+        self.res1_a = smooth_dialated_block(interm_channels, dialation_start=1)
+        self.res1_b = smooth_dialated_block(interm_channels, dialation_start=1)
+        self.res1_c = smooth_dialated_block(interm_channels, dialation_start=1)
+        self.res1_d = smooth_dialated_block(interm_channels, dialation_start=1)
 
-        self.res2_a = smooth_dialated_block(interm_channels, dialation_start=1)
-        self.res2_b = smooth_dialated_block(interm_channels, dialation_start=1)
+        self.res2_a = smooth_dialated_block(interm_channels, dialation_start=2)
+        self.res2_b = smooth_dialated_block(interm_channels, dialation_start=2)
+        self.res2_c = smooth_dialated_block(interm_channels, dialation_start=2)
+        self.res2_d = smooth_dialated_block(interm_channels, dialation_start=2)
 
-        self.res3_a = smooth_dialated_block(interm_channels, dialation_start=1)
-        self.res3_b = smooth_dialated_block(interm_channels, dialation_start=2)
+        self.res3_a = smooth_dialated_block(interm_channels, dialation_start=4)
+        self.res3_b = smooth_dialated_block(interm_channels, dialation_start=4)
+        self.res3_c = smooth_dialated_block(interm_channels, dialation_start=4)
+        self.res3_d = smooth_dialated_block(interm_channels, dialation_start=4)
 
-        self.res4_a = smooth_dialated_block(interm_channels, dialation_start=2)
-        self.res4_b = smooth_dialated_block(interm_channels, dialation_start=2)
-
-        self.res5 = smooth_dialated_block(interm_channels, dialation_start=4)
+        # self.res4_a = smooth_dialated_block(interm_channels, dialation_start=8)
+        # self.res4_b = smooth_dialated_block(interm_channels, dialation_start=8)
+        # self.res4_c = smooth_dialated_block(interm_channels, dialation_start=8)
 
         self.res_final = residual_block(interm_channels)
 
@@ -184,15 +190,23 @@ class GCANet_atrous(nn.Module):
     def forward(self, x):
         y1 = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
 
-        y = self.res1(y1)
-        y = self.res2_a(y)
-        y = self.res2_b(y)
-        y2 = self.res3_a(y)
+        y = self.res1_a(y1)
+        y = self.res1_b(y)
+        y = self.res1_c(y)
+        y2 = self.res1_d(y)
 
-        y = self.res3_b(y2)
-        y = self.res4_a(y)
-        y = self.res4_b(y)
-        y = self.res5(y)
+        y = self.res2_a(y2)
+        y = self.res2_b(y)
+        y = self.res2_c(y)
+        y3 = self.res2_d(y)
+
+        y = self.res3_a(y3)
+        y = self.res3_b(y)
+        y = self.res3_c(y)
+        y = self.res3_d(y)
+        # y = self.res4_a(y4)
+        # y = self.res4_b(y)
+        # y = self.res4_c(y)
         y3 = self.res_final(y)
 
         gates = self.gate(torch.cat((y1, y2, y3), dim=1))

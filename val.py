@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 from utils.train_helper import set_device, load_models, AvgLoss_with_dict
 
 # Self ensemble
-from utils.self_ensemble import ensemble_ops
+from utils.self_ensemble import ensemble_ops, plot_single
 
 # Experiment, add any observers by command line
 ex = Experiment("val")
@@ -80,7 +80,7 @@ def main(_run):
     # Compatibility with checkpoints without global_step
     if not global_step:
         global_step = start_epoch * len(data.train_loader) * args.batch_size
-    start_epoch = global_step // len(data.train_loader.dataset)
+    # start_epoch = global_step // len(data.train_loader.dataset)
 
     _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0}
     avg_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict, args=args)
@@ -89,17 +89,13 @@ def main(_run):
 
     # Val and test paths
     if args.self_ensemble:
-        val_path = (
-            args.output_dir / f"val_{args.inference_mode}_self_ensemble_90_and_180"
-        )
+        val_path = args.output_dir / f"val_{args.inference_mode}_self_ensemble"
     else:
         val_path = args.output_dir / f"val_{args.inference_mode}"
     val_path.mkdir(exist_ok=True, parents=True)
 
     if args.self_ensemble:
-        test_path = (
-            args.output_dir / f"test_{args.inference_mode}_self_ensemble_90_and_180"
-        )
+        test_path = args.output_dir / f"test_{args.inference_mode}_self_ensemble"
     else:
         test_path = args.output_dir / f"test_{args.inference_mode}"
     test_path.mkdir(exist_ok=True, parents=True)
@@ -123,7 +119,6 @@ def main(_run):
                 output = G(source)
 
                 if args.self_ensemble:
-                    len_transforms = len(ensemble_ops)
                     output_ensembled = [output]
 
                     for k in ensemble_ops.keys():
@@ -213,7 +208,6 @@ def main(_run):
                 output = G(source)
 
                 if args.self_ensemble:
-                    len_transforms = len(ensemble_ops)
                     output_ensembled = [output]
 
                     for k in ensemble_ops.keys():
@@ -229,6 +223,9 @@ def main(_run):
 
                     output_ensembled = torch.cat(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
+
+                    plot_single(output.mul(0.5).add(0.5))
+                    breakpoint()
 
                 for e in range(args.batch_size):
                     output_numpy = (

@@ -85,7 +85,7 @@ def _to_tensor(img):
     return torch.tensor(img.copy()).permute(2, 0, 1).unsqueeze(0)
 
 
-def plot(img1, img2, img3):
+def plot_3(img1, img2, img3):
     """
     :param img: [1, C, H, W]
     """
@@ -108,26 +108,36 @@ def plot(img1, img2, img3):
     plt.show()
 
 
+def plot_single(img):
+    """
+    :param img: [1, C, H, W]
+    """
+
+    img = img[0].permute(1, 2, 0).cpu().numpy()
+    plt.imshow(img)
+    plt.show()
+
+
 ensemble_ops = {
     "flip_horz": (flip_horizontal, flip_horizontal),
     "flip_vert": (flip_vertical, flip_vertical),
     "rotate_180": (rotate_180, rotate_180),
     # "rotate_90_counter": (rotate_90_counterclock, rotate_90_clock),
     # "rotate_90_clock": (rotate_90_clock, rotate_90_counterclock),
-    "flip_vert_rotate_90_counter": (
-        flip_vertical_rotate_90_counterclock,
-        flip_vertical_rotate_90_counterclock_inverse,
-    ),
-    "flip_vert_rotate_90_clock": (
-        flip_vertical_rotate_90_clock,
-        flip_vertical_rotate_90_clock_inverse,
-    ),
-    "flip_horz_rotate_90_counter": (
-        flip_horizontal_rotate_90_counterclock,
-        flip_horizontal_rotate_90_counterclock_inverse,
-    ),
-    "flip_horz_rotate_90_clock": (
-        flip_horizontal_rotate_90_clock,
-        flip_horizontal_rotate_90_clock_inverse,
-    ),
+    # "flip_vert_rotate_90_counter": (
+    #     flip_vertical_rotate_90_counterclock,
+    #     flip_vertical_rotate_90_counterclock_inverse,
+    # ),
+    # "flip_vert_rotate_90_clock": (
+    #     flip_vertical_rotate_90_clock,
+    #     flip_vertical_rotate_90_clock_inverse,
+    # ),
+    # "flip_horz_rotate_90_counter": (
+    #     flip_horizontal_rotate_90_counterclock,
+    #     flip_horizontal_rotate_90_counterclock_inverse,
+    # ),
+    # "flip_horz_rotate_90_clock": (
+    #     flip_horizontal_rotate_90_clock,
+    #     flip_horizontal_rotate_90_clock_inverse,
+    # ),
 }

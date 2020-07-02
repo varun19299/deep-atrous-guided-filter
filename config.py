@@ -23,6 +23,10 @@ def base_config():
         image_dir = Path("/media/data/salman/udc/")
         dump_dir = image_dir
 
+    elif system == "Varun":
+        image_dir = Path("data")
+        dump_dir = Path(".")
+
     elif system == "Genesis":
         image_dir = Path("data/")
         dump_dir = Path("/mnt/vol_b/udc/")

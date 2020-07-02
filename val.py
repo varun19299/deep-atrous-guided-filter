@@ -53,6 +53,7 @@ def main(_run):
     args.lambda_perception = 0.0
     args.finetune = False
     args.batch_size = 1
+    args.do_augment = False
 
     # Set device, init dirs
     device, source_device = set_device(args)
@@ -88,13 +89,17 @@ def main(_run):
 
     # Val and test paths
     if args.self_ensemble:
-        val_path = args.output_dir / f"val_{args.inference_mode}_self_ensemble"
+        val_path = (
+            args.output_dir / f"val_{args.inference_mode}_self_ensemble_90_and_180"
+        )
     else:
         val_path = args.output_dir / f"val_{args.inference_mode}"
     val_path.mkdir(exist_ok=True, parents=True)
 
     if args.self_ensemble:
-        test_path = args.output_dir / f"test_{args.inference_mode}_self_ensemble"
+        test_path = (
+            args.output_dir / f"test_{args.inference_mode}_self_ensemble_90_and_180"
+        )
     else:
         test_path = args.output_dir / f"test_{args.inference_mode}"
     test_path.mkdir(exist_ok=True, parents=True)

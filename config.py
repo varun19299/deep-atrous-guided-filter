@@ -5,7 +5,7 @@ import torch
 def base_config():
     exp_name = "ours"
     system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
+    assert system in ["CFI", "FPM", "Jarvis", "Varun", "Genesis"]
 
     # ---------------------------------------------------------------------------- #
     # Directories
@@ -22,6 +22,10 @@ def base_config():
     elif system == "Jarvis":
         image_dir = Path("/media/data/salman/udc/")
         dump_dir = image_dir
+
+    elif system == "Genesis":
+        image_dir = Path("data/")
+        dump_dir = Path("/mnt/vol_b/udc/")
 
     output_dir = dump_dir / "outputs" / exp_name
     ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
@@ -205,6 +209,34 @@ def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
     # Cosine annealing
     T_0 = 64
     T_mult = 2
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-increasing"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 960
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # image_height = 512
+    # image_width = 1024
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
@@ -645,6 +677,7 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle,
     guided_filter_l1_tanh_pixelshuffle_5x5,
     guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ms_ssim_perceptual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim,

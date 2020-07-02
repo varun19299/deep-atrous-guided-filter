@@ -8,6 +8,7 @@ from models.guided_filtering_net import (
     DeepGuidedFilterGuidedMapConvGF,
     DeepGuidedFilterGuidedMapConvGFPixelShuffle,
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved,
+    DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous,
 )
 
 
@@ -72,6 +73,17 @@ def model(args, source_device=None, target_device=None):
             DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved(
                 args, use_FFA=True, use_deeper_GCAN=True
             ),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "guided-filter-pixelshuffle-gca-atrous":
+        return (
+            DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args),
             Discriminator(
                 args,
                 source_device=source_device,

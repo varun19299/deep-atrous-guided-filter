@@ -71,6 +71,9 @@ def base_config():
     # save a copy of weights every x epochs
     save_copy_every_epochs = 128
 
+    # For model ensembling
+    save_num_snapshots = 8
+
     # the number of iterations (default: 10) to print at
     log_interval = 20
 

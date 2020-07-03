@@ -207,9 +207,6 @@ def save_weights(
         if is_local_rank_0:
             logging.info(f"Epoch {epoch + 1} saving weights")
 
-        # Systems for which Epoch 10 saving allowed
-        is_sys_allowed = args.system in ["CFI", "Jarvis", "FPM"]
-
         if G:
             # Gen
             G_state = {
@@ -227,15 +224,13 @@ def save_weights(
             torch.save(G_state, path_G)
 
             # Specific saving
-            if (
-                (epoch + 2) % args.save_copy_every_epochs == 0
-                and tag == "latest"
-                and is_sys_allowed
-            ):
-                save_filename_G = f"Epoch_{epoch}_{save_filename_G}"
+            if tag == "latest":
+                for i in range(1, args.save_num_snapshots + 1):
+                    if (epoch + i) % args.save_copy_every_epochs == 0:
+                        save_filename_G = f"Epoch_{epoch}_{save_filename_G}"
 
-            path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
-            torch.save(G_state, path_G)
+                        path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
+                        torch.save(G_state, path_G)
 
         if D:
             # Disc

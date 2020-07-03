@@ -88,15 +88,21 @@ def main(_run):
 
     # Val and test paths
     if args.self_ensemble:
-        val_path = args.output_dir / f"val_{args.inference_mode}_self_ensemble"
+        val_path = (
+            args.output_dir
+            / f"val_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
+        )
     else:
-        val_path = args.output_dir / f"val_{args.inference_mode}"
+        val_path = args.output_dir / f"val_{args.inference_mode}_epoch_{start_epoch}"
     val_path.mkdir(exist_ok=True, parents=True)
 
     if args.self_ensemble:
-        test_path = args.output_dir / f"test_{args.inference_mode}_self_ensemble"
+        test_path = (
+            args.output_dir
+            / f"test_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
+        )
     else:
-        test_path = args.output_dir / f"test_{args.inference_mode}"
+        test_path = args.output_dir / f"test_{args.inference_mode}_epoch_{start_epoch}"
     test_path.mkdir(exist_ok=True, parents=True)
 
     with torch.no_grad():

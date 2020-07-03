@@ -36,7 +36,7 @@ Splits:
 * Poled_{train,val}: Poled acquired images, HQ (glass), LQ (Poled) pairs.
 * Toled_{train,val}: Toled acquired images, HQ (glass), LQ (Toled) pairs.
 * Sim_{train,val}: our simulated set.
-* DIV2K_{train,val}: source images used for Poled, Toled in monitor acquisition. Used to train sim networks.
+* DIV2K: source images used for train Poled, Toled in monitor acquisition. Used to train sim networks.
 
 **Outputs folder**: Val, test dumps under various experiment names.
 

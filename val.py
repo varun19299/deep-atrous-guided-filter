@@ -229,9 +229,6 @@ def main(_run):
                     output_ensembled = torch.cat(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
-                    plot_single(output.mul(0.5).add(0.5))
-                    breakpoint()
-
                 for e in range(args.batch_size):
                     output_numpy = (
                         output[e]

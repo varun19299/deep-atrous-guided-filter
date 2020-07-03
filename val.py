@@ -80,7 +80,6 @@ def main(_run):
     # Compatibility with checkpoints without global_step
     if not global_step:
         global_step = start_epoch * len(data.train_loader) * args.batch_size
-    # start_epoch = global_step // len(data.train_loader.dataset)
 
     _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0}
     avg_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict, args=args)

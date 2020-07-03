@@ -18,8 +18,8 @@ def base_config():
     # Data
     # ---------------------------------------------------------------------------- #
 
-    train_source_dir = image_dir / "Poled" / "LQ"
-    train_target_dir = image_dir / "Poled" / "HQ"
+    train_source_dir = image_dir / "Poled_train" / "LQ"
+    train_target_dir = image_dir / "Poled_train" / "HQ"
 
     val_source_dir = None
     val_target_dir = None
@@ -548,7 +548,7 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
 
     image_dir = Path("data")
     train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
-    train_target_dir = image_dir / "Poled" / "HQ"
+    train_target_dir = image_dir / "Poled_train" / "HQ"
 
     val_source_dir = None
     val_target_dir = None
@@ -581,7 +581,7 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
 
     image_dir = Path("data")
     train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
-    train_target_dir = image_dir / "Poled" / "LQ"
+    train_target_dir = image_dir / "Poled_train" / "LQ"
 
     val_source_dir = None
     val_target_dir = None

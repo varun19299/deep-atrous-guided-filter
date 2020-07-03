@@ -4,36 +4,15 @@ import torch
 
 def base_config():
     exp_name = "ours"
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun", "Genesis"]
 
     # ---------------------------------------------------------------------------- #
     # Directories
     # ---------------------------------------------------------------------------- #
 
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Varun":
-        image_dir = Path("data")
-        dump_dir = Path(".")
-
-    elif system == "Genesis":
-        image_dir = Path("data/")
-        dump_dir = Path("/mnt/vol_b/udc/")
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
+    image_dir = Path("data")
+    output_dir = Path("outputs") / exp_name
+    ckpt_dir = Path("ckpts")  # Checkpoints saved to ckpt_dir / exp_name
+    run_dir = Path("runs")  # Runs saved to run_dir / exp_name
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -317,33 +296,11 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim():
     val_test_epoch_interval = 1
     save_copy_every_epochs = 6
 
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
     # ---------------------------------------------------------------------------- #
     # Data
     # ---------------------------------------------------------------------------- #
 
+    image_dir = Path("data")
     train_source_dir = image_dir / "Sim_train" / "POLED"
     train_target_dir = image_dir / "Sim_train" / "Glass"
 
@@ -428,33 +385,10 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim():
     val_test_epoch_interval = 6
     save_copy_every_epochs = 16
 
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
     # ---------------------------------------------------------------------------- #
     # Data
     # ---------------------------------------------------------------------------- #
-
+    image_dir = Path("data")
     train_source_dir = image_dir / "Sim_train" / "POLED"
     train_target_dir = image_dir / "Sim_train" / "Glass"
 
@@ -465,6 +399,31 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim():
 
     # Cosine annealing
     T_0 = 16
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA-sim-actual"
+
+    batch_size = 2
+    do_augment = True
+    num_epochs = 64 + 128 + 256
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved-FFA"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
     T_mult = 2
 
     learning_rate = 3e-4
@@ -583,30 +542,11 @@ def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     batch_size = 2
     num_epochs = 255 - 1
 
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
     # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
     # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
     train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
     train_target_dir = image_dir / "Poled" / "HQ"
 
@@ -635,33 +575,11 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
 
     num_epochs = 255 - 1
 
-    system = "CFI"
-    assert system in ["CFI", "FPM", "Jarvis", "Varun"]
-
-    # ---------------------------------------------------------------------------- #
-    # Directories
-    # ---------------------------------------------------------------------------- #
-
-    if system == "CFI":
-        image_dir = Path("/mnt/ssd/udc/")
-        dump_dir = Path(".")
-
-    elif system == "FPM":
-        image_dir = Path("/media/salman/udc/")
-        dump_dir = image_dir
-
-    elif system == "Jarvis":
-        image_dir = Path("/media/data/salman/udc/")
-        dump_dir = image_dir
-
-    output_dir = dump_dir / "outputs" / exp_name
-    ckpt_dir = dump_dir / "ckpts"  # Checkpoints saved to ckpt_dir / exp_name
-    run_dir = dump_dir / "runs"  # Runs saved to run_dir / exp_name
-
     # ---------------------------------------------------------------------------- #
     # Data
     # ---------------------------------------------------------------------------- #
 
+    image_dir = Path("data")
     train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
     train_target_dir = image_dir / "Poled" / "LQ"
 
@@ -688,6 +606,7 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ECA,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_deeper,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual,

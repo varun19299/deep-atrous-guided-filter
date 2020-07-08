@@ -164,11 +164,23 @@ def get_dataloaders(args, is_local_rank_0: bool = True):
     val_loader = None
     test_loader = None
 
+    if args.tpu_distributed:
+        import torch_xla.core.xla_model as xm
+
     if len(train_dataset):
         if args.distdataparallel:
-            train_sampler = torch.utils.data.distributed.DistributedSampler(
-                train_dataset, num_replicas=dist.get_world_size(), shuffle=True
-            )
+            if args.tpu_distributed:
+                train_sampler = torch.utils.data.distributed.DistributedSampler(
+                    train_dataset,
+                    num_replicas=xm.xrt_world_size(),
+                    rank=xm.get_ordinal(),
+                    shuffle=True,
+                )
+
+            else:
+                train_sampler = torch.utils.data.distributed.DistributedSampler(
+                    train_dataset, num_replicas=dist.get_world_size(), shuffle=True
+                )
 
             train_loader = DataLoader(
                 train_dataset,
@@ -193,9 +205,18 @@ def get_dataloaders(args, is_local_rank_0: bool = True):
 
     if len(val_dataset):
         if args.distdataparallel:
-            val_sampler = torch.utils.data.distributed.DistributedSampler(
-                val_dataset, num_replicas=dist.get_world_size(), shuffle=True
-            )
+            if args.tpu_distributed:
+                val_sampler = torch.utils.data.distributed.DistributedSampler(
+                    val_dataset,
+                    num_replicas=xm.xrt_world_size(),
+                    rank=xm.get_ordinal(),
+                    shuffle=True,
+                )
+
+            else:
+                val_sampler = torch.utils.data.distributed.DistributedSampler(
+                    val_dataset, num_replicas=dist.get_world_size(), shuffle=True
+                )
 
             val_loader = DataLoader(
                 val_dataset,
@@ -220,9 +241,17 @@ def get_dataloaders(args, is_local_rank_0: bool = True):
 
     if len(test_dataset):
         if args.distdataparallel:
-            test_sampler = torch.utils.data.distributed.DistributedSampler(
-                test_dataset, num_replicas=dist.get_world_size(), shuffle=True
-            )
+            if args.tpu_distributed:
+                test_sampler = torch.utils.data.distributed.DistributedSampler(
+                    test_dataset,
+                    num_replicas=xm.xrt_world_size(),
+                    rank=xm.get_ordinal(),
+                    shuffle=True,
+                )
+            else:
+                test_sampler = torch.utils.data.distributed.DistributedSampler(
+                    test_dataset, num_replicas=dist.get_world_size(), shuffle=True
+                )
             test_loader = DataLoader(
                 test_dataset,
                 batch_size=args.batch_size,

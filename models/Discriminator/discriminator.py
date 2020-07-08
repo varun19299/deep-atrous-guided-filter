@@ -16,20 +16,20 @@ ex = initialise(ex)
 
 
 def group_norm(num_channels: int, args: "tupperware"):
-    return nn.GroupNorm(num_channels=num_channels, num_groups=args.num_groups)
+    return nn.GroupNorm(num_channels=num_channels, num_groups=args.disc_num_groups)
 
 
 def get_normaliser(args: "tupperware"):
     """
     Batch norm or Group norm
     """
-    if args.normaliser == "batch_norm":
+    if args.disc_normaliser == "batch_norm":
         return nn.BatchNorm2d
-    elif args.normaliser == "instance_norm":
+    elif args.disc_normaliser == "instance_norm":
         return nn.InstanceNorm2d
-    elif args.normaliser == "group_norm":
+    elif args.disc_normaliser == "group_norm":
         return partial(group_norm, args=args)
-    elif args.normaliser == "layer_norm":
+    elif args.disc_normaliser == "layer_norm":
         return nn.LayerNorm
 
 

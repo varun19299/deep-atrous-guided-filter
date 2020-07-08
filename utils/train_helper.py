@@ -13,6 +13,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from utils.typing_alias import *
 
+# TPUs
+try:
+    import torch_xla.core.xla_model as xm
+except ImportError:
+    print("Not configured for TPUs. Reported from train_helper.")
+
 
 def pprint_args(args):
     """
@@ -221,7 +227,11 @@ def save_weights(
             )
 
             path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
-            torch.save(G_state, path_G)
+
+            if args.tpu_distributed:
+                xm.save(G_state, path_G)
+            else:
+                torch.save(G_state, path_G)
 
             # Specific saving
             if tag == "latest":
@@ -230,7 +240,11 @@ def save_weights(
                         save_filename_G = f"Epoch_{epoch}_{save_filename_G}"
 
                         path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
-                        torch.save(G_state, path_G)
+
+                        if args.tpu_distributed:
+                            xm.save(G_state, path_G)
+                        else:
+                            torch.save(G_state, path_G)
 
         if D:
             # Disc
@@ -256,6 +270,11 @@ def save_weights(
 
             path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
             torch.save(D_state, path_D)
+
+            if args.tpu_distributed:
+                xm.save(D_state, path_D)
+            else:
+                torch.save(D_state, path_D)
     else:
         if is_local_rank_0:
             logging.info(f"Epoch {epoch + 1} NOT saving weights")
@@ -282,7 +301,7 @@ class AvgLoss_with_dict(object):
     Utility class for storing running averages of losses
     """
 
-    def __init__(self, loss_dict: "Dict", args: "tupperware", count: int = 0):
+    def __init__(self, loss_dict: "Dict", args: "tupperware" = None, count: int = 0):
         self.args = args
         self.count = count
         self.loss_dict = loss_dict
@@ -304,7 +323,7 @@ class AvgLoss_with_dict(object):
 
 
 class ExpLoss_with_dict(object):
-    def __init__(self, loss_dict: "Dict", args: "tupperware"):
+    def __init__(self, loss_dict: "Dict", args: "tupperware" = None):
         """
         :param dict: Expects default dict
         """

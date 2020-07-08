@@ -144,10 +144,10 @@ def main(_run):
         )
 
     # Initialise losses
-    g_loss = GLoss(args, rank, perception_device=rank)
+    g_loss = GLoss(args).to(rank)
 
     if args.lambda_adversarial:
-        d_loss = DLoss(args)
+        d_loss = DLoss(args).to(rank)
 
     # Compatibility with checkpoints without global_step
     if not global_step:

@@ -4,9 +4,13 @@ from torch.nn import functional as F
 from utils.model_serialization import load_state_dict
 from utils.ops import unpixel_shuffle
 
+
 from models.gca_net_improved import GCANet_improved, GCANet_improved_deeper
-from models.gca_net_improved_eca import GCAECANet_improved
-from models.gca_net_atrous import GCANet_atrous
+from models.gca_net_atrous import (
+    GCANet_atrous,
+    GCANet_atrous_corrected,
+    SmoothDilatedResidualAtrousGuidedBlock,
+)
 
 # Deep Guided Filter (DGF) utils
 from models.DGF_utils.guided_filter import FastGuidedFilter, ConvGuidedFilter
@@ -14,6 +18,7 @@ from models.DGF_utils.adaptive_norm import AdaptiveNorm
 from models.DGF_utils.weights_init import weights_init_identity
 from models.DGF_utils.eca_module import eca_layer
 from models.DGF_utils.SIREN import SIREN
+from models.DGF_utils.adaptive_norm import norm_dict
 
 
 from sacred import Experiment
@@ -210,7 +215,7 @@ class DeepGuidedFilterGuidedMapConvGF(DeepGuidedFilterConvGF):
         )
 
         self.downsample = nn.Upsample(
-            scale_factor=0.25, mode="bilinear", align_corners=True
+            scale_factor=0.5, mode="bilinear", align_corners=True
         )
 
     def forward(self, x_hr):
@@ -339,34 +344,61 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(nn.Module):
     def __init__(self, args, radius=1, dilation=0):
         super().__init__()
 
+        self.args = args
+        norm = norm_dict[args.norm_layer]
+
         c = args.guided_map_channels
-
-        self.guided_map = nn.Sequential(
-            nn.Conv2d(
-                3,
-                c,
-                kernel_size=args.guided_map_kernel_size,
-                padding=args.guided_map_kernel_size // 2,
-                bias=False,
+        if args.guided_map_is_atrous_residual:
+            self.guided_map = SmoothDilatedResidualAtrousGuidedBlock(
+                in_channel=3, channel_num=c, args=args
             )
-            if dilation == 0
-            else nn.Conv2d(3, c, 3, padding=dilation, dilation=dilation, bias=False),
-            AdaptiveNorm(c),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(
-                c,
-                3,
-                kernel_size=args.guided_map_kernel_size,
-                padding=args.guided_map_kernel_size // 2,
-            ),
-        )
+        else:
+            self.guided_map = nn.Sequential(
+                nn.Conv2d(
+                    3,
+                    c,
+                    kernel_size=args.guided_map_kernel_size,
+                    padding=args.guided_map_kernel_size // 2,
+                    bias=False,
+                )
+                if dilation == 0
+                else nn.Conv2d(
+                    3, c, 3, padding=dilation, dilation=dilation, bias=False
+                ),
+                norm(c),
+                nn.LeakyReLU(0.2, inplace=True),
+                nn.Conv2d(
+                    c,
+                    3,
+                    kernel_size=args.guided_map_kernel_size,
+                    padding=args.guided_map_kernel_size // 2,
+                ),
+            )
 
-        self.lr = GCANet_atrous(
-            in_c=3 * args.pixelshuffle_ratio ** 2,
-            out_c=3 * args.pixelshuffle_ratio ** 2,
-        )
+        if args.model == "guided-filter-pixelshuffle-gca-atrous":
+            self.lr = GCANet_atrous(
+                in_c=3 * args.pixelshuffle_ratio ** 2,
+                out_c=3 * args.pixelshuffle_ratio ** 2,
+                args=args,
+            )
+        elif args.model == "guided-filter-pixelshuffle-gca-atrous-corrected":
+            self.lr = GCANet_atrous_corrected(
+                in_c=3 * args.pixelshuffle_ratio ** 2,
+                out_c=3 * args.pixelshuffle_ratio ** 2,
+                args=args,
+            )
 
-        self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
+        elif args.model == "atrous-guided-filter-pixelshuffle-gca-atrous-corrected":
+            self.lr = GCANet_atrous_corrected(
+                in_c=3 * args.pixelshuffle_ratio ** 2,
+                out_c=3 * args.pixelshuffle_ratio ** 2,
+                args=args,
+            )
+
+        if args.model == "guided-filter-pixelshuffle-gca-atrous":
+            self.gf = ConvGuidedFilter(radius, norm=AdaptiveNorm)
+        else:
+            self.gf = ConvGuidedFilter(radius, norm=norm)
 
         self.downsample = nn.Upsample(
             scale_factor=0.5, mode="bilinear", align_corners=True
@@ -391,10 +423,14 @@ def main(_run):
     from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    # args.use_ECA = True
     model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args)
+    ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
+    model_state_dict = ckpt["state_dict"]
+    model_state_dict.pop("module.lr.gate.bias", None)
+    model_state_dict.pop("module.lr.gate.weight", None)
 
-    summary(model, (3, 1024, 2048))
+    load_state_dict(model, model_state_dict)
+    summary(model, (3, 512, 1024))
 
     # ckpt = torch.load(
     #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"

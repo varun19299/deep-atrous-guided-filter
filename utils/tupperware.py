@@ -2,10 +2,10 @@ from collections import UserDict
 import collections
 from recordclass import recordclass
 
-__author__ = 'github.com/hangtwenty'
+__author__ = "github.com/hangtwenty"
 
 
-def tupperware(mapping): 
+def tupperware(mapping):
     """ Convert mappings to 'tupperwares' recursively.
     Lets you use dicts like they're JavaScript Object Literals (~=JSON)...
     It recursively turns mappings (dictionaries) into namedtuples.
@@ -50,8 +50,9 @@ def tupperware(mapping):
         recursion).
     """
 
-    if (isinstance(mapping, collections.Mapping) and
-            not isinstance(mapping, ProtectedDict)):
+    if isinstance(mapping, collections.Mapping) and not isinstance(
+        mapping, ProtectedDict
+    ):
         for key, value in mapping.items():
             mapping[key] = tupperware(value)
         return namedtuple_from_mapping(mapping)

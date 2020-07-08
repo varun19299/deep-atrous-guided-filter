@@ -55,7 +55,7 @@ def base_config():
     lr_scheduler = "cosine"  # or step
 
     # Cosine annealing
-    T_0 = 1
+    T_0 = 64
     T_mult = 2
 
     # Step lr
@@ -100,21 +100,44 @@ def base_config():
     model = "guided-filter"
     CAN_layers = 5
     use_SIREN = False
-    use_ECA = False
 
     pixelshuffle_ratio = 1
+    use_residual = True
+    use_gated = True
+    use_FFA = True
+    use_ECA = False
+    use_atrous = True
+    use_smooth_atrous = True
 
+    # Guided map
     guided_map_kernel_size = 1
     guided_map_channels = 16
+    guided_map_is_atrous_residual = False
+
+    # Normalisation
+    norm_layer = "adaptive-instance"
+    # group norm with 8 num_groups
+    assert norm_layer in [
+        "adaptive-instance",
+        "adaptive-batch",
+        "instance",
+        "batch",
+        "group",
+    ]
 
     # Discriminator
-    gan_type = "NSGAN"  # or RAGAN
+    gan_type = "NSGAN"
     assert gan_type in ["NSGAN", "RAGAN"]
     use_patch_gan = False
     use_spectral_norm = False
-    normaliser = "group_norm"
-    assert normaliser in ["batch_norm", "instance_norm", "group_norm", "layer_norm"]
-    num_groups = 8 if normaliser == "group_norm" else None
+    disc_normaliser = "group_norm"
+    assert disc_normaliser in [
+        "batch_norm",
+        "instance_norm",
+        "group_norm",
+        "layer_norm",
+    ]
+    disc_num_groups = 8 if disc_normaliser == "group_norm" else None
 
     # ---------------------------------------------------------------------------- #
     # Loss
@@ -139,62 +162,76 @@ def base_config():
     lpips_device = "cuda:0" if torch.cuda.is_available() else "cpu"
     distdataparallel = False
 
+    # Cloud TPU
+    tpu_distributed = False
 
-def guided_filter_l1_tanh():
-    exp_name = "guided-filter-l1-tanh"
 
+def dgf_poled():
+    batch_size = 3
+    num_epochs = 448
+
+    CAN_layers = 9
+
+    exp_name = "dgf-poled"
     model = "guided-filter"
 
 
-def guided_filter_l1_tanh_pixelshuffle():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle"
+def dgf_poled_pixelshuffle():
+    batch_size = 4
+    num_epochs = 960
 
+    CAN_layers = 9
+
+    exp_name = "dgf-poled-pixelshuffle"
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
+
+
+def dgf_toled():
     batch_size = 3
-    CAN_layers = 21
+    num_epochs = 448
+    exp_name = "dgf-toled"
 
-    do_augment = False
+    CAN_layers = 9
 
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
+    model = "guided-filter"
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = None
+    val_target_dir = None
+
+    test_source_dir = image_dir / "Toled_val" / "LQ"
 
 
-def guided_filter_l1_tanh_pixelshuffle_5x5():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-5x5"
-
+def dgf_toled_pixelshuffle():
     batch_size = 3
-    CAN_layers = 21
+    num_epochs = 960
+    exp_name = "dgf-toled-pixelshuffle"
 
-    # Finetune it
-    num_epochs = 64 - 1
-
-    guided_map_kernel_size = 5
-    guided_map_channels = 24
-
-    do_augment = True
+    CAN_layers = 9
 
     model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
 
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
 
-def guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-5x5-ms-ssim"
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    batch_size = 2
-    num_epochs = 1024 - 1
-    do_augment = True
+    val_source_dir = None
+    val_target_dir = None
 
-    CAN_layers = 21
-    guided_map_kernel_size = 5
-    guided_map_channels = 24
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
-
-    lambda_image = 1 - 0.84
-    lambda_ms_ssim = 0.84
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
+    test_source_dir = image_dir / "Toled_val" / "LQ"
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
@@ -215,8 +252,101 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
     val_test_epoch_interval = 6
     save_copy_every_epochs = 64
 
-    # image_height = 512
-    # image_width = 1024
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper-sim"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 16 + 32 + 64
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Sim_train" / "POLED"
+    train_target_dir = image_dir / "Sim_train" / "Glass"
+
+    val_source_dir = image_dir / "Sim_val" / "POLED"
+    val_target_dir = image_dir / "Sim_val" / "Glass"
+
+    test_source_dir = None
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 1
+
+    learning_rate = 3e-4
+
+
+def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual():
+    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper-sim-actual"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 5
+    guided_map_channels = 24
+
+    num_threads = 8
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    distdataparallel = True
+    tpu_distributed = True
+    # dont do this, args wont be picklable
+    # device = xm.xla_device()
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+    image_height = 1024
+    image_width = 2048
+
+
+def atrous_guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
+    exp_name = "atrous-guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 960
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
 
     # Cosine annealing
     T_0 = 64
@@ -432,105 +562,6 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual():
     learning_rate = 3e-4
 
 
-def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ECA():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-ECA"
-
-    batch_size = 2
-    do_augment = True
-    num_epochs = 960
-
-    # Model args
-    model = "guided-filter-pixelshuffle-gca-improved-FFA"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 5
-    guided_map_channels = 24
-    use_ECA = True
-
-    num_threads = batch_size * 2
-    log_interval = 25
-    val_test_epoch_interval = 6
-    save_copy_every_epochs = 64
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
-
-    learning_rate = 3e-4
-
-
-def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_deeper():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA-deeper"
-
-    batch_size = 1
-    do_augment = True
-    num_epochs = 960
-
-    # Model args
-    model = "guided-filter-pixelshuffle-gca-improved-FFA-deeper"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 5
-    guided_map_channels = 24
-
-    num_threads = batch_size * 2
-    log_interval = 25
-    val_test_epoch_interval = 6
-    save_copy_every_epochs = 64
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
-
-    learning_rate = 3e-4
-
-
-def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-contextual"
-
-    batch_size = 2
-    do_augment = True
-    num_epochs = 960 - 1
-    learning_rate = 3e-5
-
-    # Model args
-    model = "guided-filter-pixelshuffle-gca-improved"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 5
-    guided_map_channels = 24
-
-    num_threads = batch_size * 2
-    log_interval = 25
-    val_test_epoch_interval = 6
-    save_copy_every_epochs = 64
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
-
-    learning_rate = 3e-5
-
-    # Loss
-    lambda_image = 0.0  # l1
-    lambda_CoBi_RGB = 1.0
-
-    cobi_rgb_patch_size = 8
-    cobi_rgb_stride = 8
-
-
-def guided_filter_l1_tanh_pixelshuffle_augment():
-    exp_name = "guided-filter-l1-tanh-pixelshuffle-augment"
-
-    batch_size = 4
-    CAN_layers = 21
-
-    do_augment = True
-
-    finetune = True
-    num_epochs = 128 - 1
-
-    model = "guided-filter-pixelshuffle"
-    pixelshuffle_ratio = 2
-
-
 def guided_filter_l1_tanh_pixelshuffle_forward_glass():
     exp_name = (
         "guided-filter-l1-tanh-pixelshuffle-forward-glass-contextual-patch-8-stride-8"
@@ -598,11 +629,14 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
 
 
 named_configs = [
-    guided_filter_l1_tanh,
-    guided_filter_l1_tanh_pixelshuffle,
-    guided_filter_l1_tanh_pixelshuffle_5x5,
-    guided_filter_l1_tanh_pixelshuffle_5x5_ms_ssim,
+    dgf_poled,
+    dgf_poled_pixelshuffle,
+    dgf_toled,
+    dgf_toled_pixelshuffle,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim,
+    guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual,
+    atrous_guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ms_ssim_perceptual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim,
@@ -610,10 +644,6 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual,
-    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ECA,
-    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_deeper,
-    guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_contextual,
-    guided_filter_l1_tanh_pixelshuffle_augment,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,
 ]

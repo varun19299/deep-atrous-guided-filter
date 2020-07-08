@@ -45,16 +45,12 @@ def ones_like(x: "Tensor") -> "Tensor":
     return ones
 
 
-class GLoss(nn.modules.Module):
+class GLoss(nn.Module):
     def __init__(
-        self, args, device=torch.device("cpu"), perception_device=torch.device("cpu")
-    ):
+        self, args ):
         super(GLoss, self).__init__()
 
         self.args = args
-        self.device = device
-
-        self.perception_device = perception_device
         self.downsample = nn.Upsample(
             size=(256, 512), mode="bilinear", align_corners=True
         )
@@ -62,11 +58,11 @@ class GLoss(nn.modules.Module):
         if args.lambda_ms_ssim:
             self.ms_ssim_module = MS_SSIM(
                 data_range=1.0, size_average=True, channel=3
-            ).to(self.device)
-            self.win = _fspecial_gauss_1d(11, 1.5).to(self.device)
+            )
+            self.win = _fspecial_gauss_1d(11, 1.5)
 
         if args.lambda_perception:
-            self.LossNetwork = Vgg16FeatureExtractor().to(perception_device)
+            self.LossNetwork = Vgg16FeatureExtractor()
             self.LossNetwork.eval()
 
     def _perception_metric(self, X, Y):
@@ -74,8 +70,8 @@ class GLoss(nn.modules.Module):
         # feat_Y = self.LossNetwork(Y.to(self.perception_device))
         #
 
-        feat_X = self.LossNetwork(self.downsample(X).to(self.perception_device))
-        feat_Y = self.LossNetwork(self.downsample(Y).to(self.perception_device))
+        feat_X = self.LossNetwork(self.downsample(X))
+        feat_Y = self.LossNetwork(self.downsample(Y))
 
         loss = F.mse_loss(feat_X.relu2_2, feat_Y.relu2_2)
         loss = loss + F.mse_loss(feat_X.relu4_3, feat_Y.relu4_3)
@@ -111,14 +107,12 @@ class GLoss(nn.modules.Module):
         output: "Tensor" = [],
         target: "Tensor" = [],
     ):
-        device = self.device
-
-        self.total_loss = torch.tensor(0.0).to(device)
-        self.adversarial_loss = torch.tensor(0.0).to(device)
-        self.perception_loss = torch.tensor(0.0).to(device)
-        self.image_loss = torch.tensor(0.0).to(device)
-        self.ms_ssim_loss = torch.tensor(0.0).to(device)
-        self.cobi_rgb_loss = torch.tensor(0.0).to(device)
+        self.total_loss = torch.tensor(0.0).type_as(output)
+        self.adversarial_loss = torch.tensor(0.0).type_as(output)
+        self.perception_loss = torch.tensor(0.0).type_as(output)
+        self.image_loss = torch.tensor(0.0).type_as(output)
+        self.ms_ssim_loss = torch.tensor(0.0).type_as(output)
+        self.cobi_rgb_loss = torch.tensor(0.0).type_as(output)
 
         # L1
         if self.args.lambda_image:
@@ -129,7 +123,7 @@ class GLoss(nn.modules.Module):
             #     win = self.win.repeat(C, 1, 1, 1)
             #     l1_diff = gaussian_filter(l1_diff, win)
 
-            self.image_loss += F.l1_loss(output, target).mean() * self.args.lambda_image
+            self.image_loss += F.l1_loss(output, target) * self.args.lambda_image
 
         # VGG 19
         if self.args.lambda_perception:

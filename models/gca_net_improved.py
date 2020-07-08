@@ -319,11 +319,11 @@ class GCANet_improved_deeper(nn.Module):
 
 @ex.automain
 def main(_run):
-    from utils.tupperware import tupperware
+    from utils.tupperware import Tupperware
     from torchsummary import summary
 
-    args = tupperware(_run.config)
+    args = Tupperware(_run.config)
 
-    model = GCANet_improved_deeper(in_c=12, out_c=12, use_FFA=True).to(args.device)
+    model = GCANet_improved_deeper(in_c=12, out_c=12, use_FFA=True)
 
     summary(model, (12, 256, 512))

@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
+from functools import partial
 
 
 class AdaptiveNorm(nn.Module):
@@ -14,6 +16,7 @@ class AdaptiveNorm(nn.Module):
     def forward(self, x):
         return self.w_0 * x + self.w_1 * self.bn(x)
 
+
 class AdaptiveInstanceNorm(nn.Module):
     def __init__(self, n):
         super(AdaptiveInstanceNorm, self).__init__()
@@ -26,3 +29,11 @@ class AdaptiveInstanceNorm(nn.Module):
     def forward(self, x):
         return self.w_0 * x + self.w_1 * self.ins_norm(x)
 
+
+norm_dict = {
+    "adaptive-instance": AdaptiveInstanceNorm,
+    "adaptive-batch": AdaptiveNorm,
+    "instance": nn.InstanceNorm2d,
+    "batch": nn.BatchNorm2d,
+    "group": partial(F.group_norm, num_groups=8),
+}

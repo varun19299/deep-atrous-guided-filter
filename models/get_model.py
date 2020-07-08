@@ -15,7 +15,7 @@ from models.guided_filtering_net import (
 def model(args, source_device=None, target_device=None):
     if args.model == "guided-filter":
         return (
-            DeepGuidedFilterGuidedMapConvGF(),
+            DeepGuidedFilterGuidedMapConvGF(layer=args.CAN_layers),
             Discriminator(
                 args,
                 source_device=source_device,
@@ -81,7 +81,11 @@ def model(args, source_device=None, target_device=None):
             ),
         )
 
-    elif args.model == "guided-filter-pixelshuffle-gca-atrous":
+    elif args.model in [
+        "guided-filter-pixelshuffle-gca-atrous",
+        "guided-filter-pixelshuffle-gca-atrous-corrected",
+        "atrous-guided-filter-pixelshuffle-gca-atrous-corrected",
+    ]:
         return (
             DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args),
             Discriminator(

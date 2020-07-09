@@ -371,4 +371,17 @@ def ours_toled_no_gated():
 
 # Loss functions
 
-ablative_configs = []
+ablative_configs = [
+    ours_poled,
+    ours_toled,
+    # Smooth atrous ablative
+    ours_poled_normal_conv,
+    ours_poled_no_smooth,
+    ours_toled_normal_conv,
+    ours_toled_no_smooth,
+    # Residual and Gated
+    ours_poled_no_residual_no_gated,
+    ours_poled_no_gated,
+    ours_toled_no_residual_no_gated,
+    ours_toled_no_gated,
+]

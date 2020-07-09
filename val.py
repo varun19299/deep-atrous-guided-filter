@@ -13,6 +13,7 @@ import cv2
 # Torch Libs
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from lpips_pytorch import LPIPS
 
 # Modules
 from dataloader import get_dataloaders
@@ -64,8 +65,14 @@ def main(_run):
     data.val_loader = data.train_loader
 
     # Model
-    G, _ = get_model.model(args, source_device=source_device, target_device=device)
+    G, _ = get_model.model(args)
     G = G.to(device)
+
+    # LPIPS Criterion
+    lpips_criterion = LPIPS(
+        net_type="alex",  # choose a network type from ['alex', 'squeeze', 'vgg']
+        version="0.1",  # Currently, v0.1 is supported
+    ).to(device)
 
     # Load Models
     (G, _), _, global_step, start_epoch, loss = load_models(
@@ -81,7 +88,7 @@ def main(_run):
     if not global_step:
         global_step = start_epoch * len(data.train_loader) * args.batch_size
 
-    _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0}
+    _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0, "LPIPS": 0.0}
     avg_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict, args=args)
 
     logging.info(f"Loaded experiment {args.exp_name} trained for {start_epoch} epochs.")
@@ -140,13 +147,19 @@ def main(_run):
                     output_ensembled = torch.cat(output_ensembled, dim=0)
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
+                # LPIPS
+                # TODO: check if results agree with udc_paper
+                metrics_dict["LPIPS"] += lpips_criterion(output, target)
+
                 # PSNR
-                metrics_dict["PSNR"] += PSNR(output, target)
+                metrics_dict["PSNR"] += PSNR(
+                    (output * 255.0).int() / 255.0, (target * 255.0).int() / 255.0
+                )
 
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        target[e]
+                        ((target * 255.0).int() / 255.0)[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -156,7 +169,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        output[e]
+                        ((output * 255.0).int() / 255.0)[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -183,7 +196,7 @@ def main(_run):
 
                 pbar.update(args.batch_size)
                 pbar.set_description(
-                    f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_metrics.loss_dict['PSNR']:.3f}"
+                    f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_metrics.loss_dict['SSIM']:.3f} | LPIPS: {avg_metrics.loss_dict['SSIM']:.3f}"
                 )
 
             with open(val_path / "metrics.txt", "w") as f:

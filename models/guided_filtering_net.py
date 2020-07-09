@@ -424,12 +424,12 @@ def main(_run):
 
     args = tupperware(_run.config)
     model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args)
-    ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
-    model_state_dict = ckpt["state_dict"]
-    model_state_dict.pop("module.lr.gate.bias", None)
-    model_state_dict.pop("module.lr.gate.weight", None)
+    # ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
+    # model_state_dict = ckpt["state_dict"]
+    # model_state_dict.pop("module.lr.gate.bias", None)
+    # model_state_dict.pop("module.lr.gate.weight", None)
+    # load_state_dict(model, model_state_dict)
 
-    load_state_dict(model, model_state_dict)
     summary(model, (3, 512, 1024))
 
     # ckpt = torch.load(

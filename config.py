@@ -1,6 +1,8 @@
 from pathlib import Path
 import torch
 
+from ablation_config import ablative_configs
+
 
 def base_config():
     exp_name = "ours"
@@ -123,6 +125,7 @@ def base_config():
         "instance",
         "batch",
         "group",
+        "none",  # No normalization
     ]
 
     # Discriminator
@@ -315,10 +318,6 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual():
     save_copy_every_epochs = 64
 
     distdataparallel = True
-    tpu_distributed = True
-    # dont do this, args wont be picklable
-    # device = xm.xla_device()
-
     # Cosine annealing
     T_0 = 64
     T_mult = 2
@@ -647,6 +646,8 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,
 ]
+
+named_configs += ablative_configs
 
 
 def initialise(ex):

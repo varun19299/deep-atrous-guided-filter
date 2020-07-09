@@ -13,13 +13,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from utils.typing_alias import *
 
-# TPUs
-try:
-    import torch_xla.core.xla_model as xm
-except ImportError:
-    print("Not configured for TPUs. Reported from train_helper.")
-
-
 def pprint_args(args):
     """
     Pretty print args

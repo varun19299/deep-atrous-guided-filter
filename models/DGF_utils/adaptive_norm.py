@@ -30,10 +30,19 @@ class AdaptiveInstanceNorm(nn.Module):
         return self.w_0 * x + self.w_1 * self.ins_norm(x)
 
 
+class NoNorm(nn.Module):
+    def __init__(self, n):
+        super().__init__()
+
+    def forward(self, x):
+        return x
+
+
 norm_dict = {
     "adaptive-instance": AdaptiveInstanceNorm,
     "adaptive-batch": AdaptiveNorm,
     "instance": nn.InstanceNorm2d,
     "batch": nn.BatchNorm2d,
     "group": partial(F.group_norm, num_groups=8),
+    "none": NoNorm,
 }

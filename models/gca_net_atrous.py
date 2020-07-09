@@ -203,7 +203,13 @@ class SmoothDilatedResidualAtrousBlock(nn.Module):
                 channel_num, channel_num, 3, 1, padding=1, bias=False
             )
 
-        self.conv = nn.Conv2d(channel_num * 2, channel_num, 3, 1, padding=1, bias=False)
+        if args.use_atrous:
+            self.conv = nn.Conv2d(
+                channel_num * 2, channel_num, 3, 1, padding=1, bias=False
+            )
+        else:
+            self.conv = nn.Conv2d(channel_num, channel_num, 3, 1, padding=1, bias=False)
+
         self.norm = norm(channel_num)
 
         if args.use_FFA:

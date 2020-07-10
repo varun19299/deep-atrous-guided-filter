@@ -20,7 +20,7 @@ def base_config():
     # ---------------------------------------------------------------------------- #
     # Data
     # ---------------------------------------------------------------------------- #
-
+    use_source_npy = False  # Use it to load source images directly as CHW
     train_source_dir = image_dir / "Poled_train" / "LQ"
     train_target_dir = image_dir / "Poled_train" / "HQ"
 
@@ -31,6 +31,10 @@ def base_config():
 
     static_val_image = "1.png"
     static_test_image = "1.png"
+
+    if use_source_npy:
+        static_val_image = "1.npy"
+        static_test_image = "1.npy"
 
     image_height = 1024
     image_width = 2048

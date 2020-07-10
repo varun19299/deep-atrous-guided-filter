@@ -70,10 +70,13 @@ class OLEDDataset(Dataset):
             )
         self.is_local_rank_0 = is_local_rank_0
 
-    def _load_dataset(self, glob_str = "*.png"):
+    def _load_dataset(self, glob_str="*.png"):
 
         if self.source_dir:
-            source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]
+            if args.use_source_npy:
+                source_paths = list(self.source_dir.glob("*.npy"))[: self.max_len]
+            else:
+                source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]
         else:
             source_paths = []
 
@@ -89,6 +92,29 @@ class OLEDDataset(Dataset):
 
     def __getitem__(self, index):
         source_path = self.source_paths[index]
+
+        if args.use_source_npy:
+            source = np.load(source_path)
+            source = torch.tensor(source).float()
+            if self.mode == "train":
+                target_path = self.target_paths[index]
+                target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
+                target = cv2.resize(
+                    target, (self.args.image_width, self.args.image_height)
+                )
+
+            elif self.mode == "val":
+                target_path = self.target_paths[index]
+                target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
+
+            if self.mode in ["train", "val"]:
+                target = torch.tensor(target).float().permute(2, 0, 1)
+                target = (target - 0.5) * 2
+
+                return source, target, source_path.name
+
+            else:
+                return source, source_path.name
 
         if self.mode == "train":
             target_path = self.target_paths[index]

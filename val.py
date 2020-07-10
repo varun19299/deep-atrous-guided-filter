@@ -174,13 +174,13 @@ def main(_run):
 
                 # LPIPS
                 metrics_dict["LPIPS"] += lpips_criterion(
-                    output_quant, target_quant
+                    output_quant.mul(0.5).add(0.5), target_quant.mul(0.5).add(0.5)
                 ).item()
 
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        ((target * 255.0).int() / 255.0)[e]
+                        ((target_quant * 255.0).int() / 255.0)[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -190,7 +190,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        ((output * 255.0).int() / 255.0)[e]
+                        ((output_quant * 255.0).int() / 255.0)[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -279,13 +279,13 @@ def main(_run):
                 # LPIPS
                 # TODO: check if results agree with udc_paper
                 metrics_dict["LPIPS"] += lpips_criterion(
-                    output_quant, target_quant
+                    output_quant.mul(0.5).add(0.5), target_quant.mul(0.5).add(0.5)
                 ).item()
 
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        ((target * 255.0).int() / 255.0)[e]
+                        ((target_quant * 255.0).int() / 255.0)[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -295,7 +295,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        ((output * 255.0).int() / 255.0)[e]
+                        ((output_quant * 255.0).int() / 255.0)[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)

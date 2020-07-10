@@ -26,8 +26,11 @@ def base_config():
 
     val_source_dir = None
     val_target_dir = None
+    # val_source_dir = image_dir / "Poled_val" / "LQ"
+    # val_target_dir = image_dir / "Poled_val" / "HQ"
 
     test_source_dir = image_dir / "Poled_val" / "LQ"
+    # test_source_dir = image_dir / "Poled_test" / "LQ"
 
     static_val_image = "1.png"
     static_test_image = "1.png"
@@ -338,32 +341,6 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual():
     image_width = 2048
 
 
-def atrous_guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
-    exp_name = "atrous-guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper"
-
-    batch_size = 1
-    do_augment = True
-    num_epochs = 960
-
-    # Model args
-    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 3
-    guided_map_channels = 16
-    guided_map_is_atrous_residual = True
-
-    num_threads = batch_size * 2
-    log_interval = 25
-    val_test_epoch_interval = 6
-    save_copy_every_epochs = 64
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
-
-    learning_rate = 3e-4
-
-
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved"
 
@@ -637,6 +614,38 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
     lambda_CoBi_RGB = 1.0
 
 
+def guided_filter_l1_tanh_pixelshuffle_forward_toled():
+    exp_name = "toled-guided-filter-l1-tanh-pixelshuffle-forward-poled-contextual-patch-8-stride-8"
+
+    batch_size = 3
+    CAN_layers = 7
+    do_augment = True
+    save_copy_every_epochs = 64
+
+    model = "guided-filter-pixelshuffle"
+    pixelshuffle_ratio = 2
+
+    num_epochs = 192
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "DIV2K" / "GT_train_aligned"
+    train_target_dir = image_dir / "Toled_train" / "LQ"
+
+    val_source_dir = None
+    val_target_dir = None
+
+    # test_source_dir = image_dir / "Sim_train" / "GT"
+    test_source_dir = image_dir / "Sim_val" / "GT"
+
+    # Loss
+    lambda_image = 0.0  # l1
+    lambda_CoBi_RGB = 1.0
+
+
 def aug_stage_2():
     exp_name = "aug_stage_2"
 
@@ -683,6 +692,306 @@ def aug_stage_2():
     learning_rate = 3e-4
 
 
+def final_poled():
+    exp_name = "atrous-guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 960
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def final_poled_sim():
+    exp_name = "final-poled-sim"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 16 + 32 + 64
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 3
+    save_copy_every_epochs = 16
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Sim_train" / "POLED"
+    train_target_dir = image_dir / "Sim_train" / "Glass"
+
+    val_source_dir = image_dir / "Sim_val" / "POLED"
+    val_target_dir = image_dir / "Sim_val" / "Glass"
+
+    test_source_dir = None
+
+    # Cosine annealing
+    T_0 = 16
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def final_poled_sim_actual():
+    exp_name = "final-poled-sim-actual"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def final_poled_sim_actual_aug():
+    exp_name = "final-poled-sim-actual-aug"
+
+    batch_size = 1
+    do_augment = False
+    num_epochs = 448
+
+    # Data
+    use_source_npy = True
+    image_dir = Path("data")
+    output_dir = Path("outputs")
+    train_source_dir = (
+        output_dir / "final-poled-sim-actual" / "train_latest_epoch_447_self_ensemble"
+    )
+    train_target_dir = image_dir / "Poled_train" / "HQ"
+
+    val_source_dir = (
+        output_dir / "final-poled-sim-actual" / "val_latest_epoch_447_self_ensemble"
+    )
+    val_target_dir = image_dir / "Poled_val" / "HQ"
+
+    test_source_dir = (
+        output_dir / "final-poled-sim-actual" / "test_latest_epoch_447_self_ensemble"
+    )
+
+    # Model args
+    model = "aug-stage-2"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def final_toled():
+    exp_name = "final-toled"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 960
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = None
+    val_target_dir = None
+    # val_source_dir = image_dir / "Toled_val" / "LQ"
+    # val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_val" / "LQ"
+    # test_source_dir = image_dir / "Toled_test" / "LQ"
+
+
+def final_toled_sim():
+    exp_name = "final-toled-sim"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 16 + 32 + 64
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 3
+    save_copy_every_epochs = 16
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Sim_train" / "TOLED"
+    train_target_dir = image_dir / "Sim_train" / "Glass"
+
+    val_source_dir = image_dir / "Sim_val" / "TOLED"
+    val_target_dir = image_dir / "Sim_val" / "Glass"
+
+    test_source_dir = None
+
+    # Cosine annealing
+    T_0 = 16
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def final_toled_sim_actual():
+    exp_name = "final-toled-sim-actual"
+
+    batch_size = 1
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = None
+    val_target_dir = None
+    # val_source_dir = image_dir / "Toled_val" / "LQ"
+    # val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_val" / "LQ"
+    # test_source_dir = image_dir / "Toled_test" / "LQ"
+
+
+def final_toled_sim_actual_aug():
+    exp_name = "final-toled-sim-actual-aug"
+
+    batch_size = 1
+    do_augment = False
+    num_epochs = 448
+
+    # Data
+    use_source_npy = True
+    image_dir = Path("data")
+    output_dir = Path("outputs")
+    train_source_dir = (
+        output_dir / "final-toled-sim-actual" / "train_latest_epoch_447_self_ensemble"
+    )
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = (
+        output_dir / "final-toled-sim-actual" / "val_latest_epoch_447_self_ensemble"
+    )
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = (
+        output_dir / "final-toled-sim-actual" / "test_latest_epoch_447_self_ensemble"
+    )
+
+    # Model args
+    model = "aug-stage-2"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
 named_configs = [
     dgf_poled,
     dgf_poled_pixelshuffle,
@@ -691,7 +1000,6 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual,
-    atrous_guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ms_ssim_perceptual,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim,
@@ -701,7 +1009,16 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,
+    guided_filter_l1_tanh_pixelshuffle_forward_toled,
     aug_stage_2,
+    final_poled,
+    final_poled_sim,
+    final_poled_sim_actual,
+    final_poled_sim_actual_aug,
+    final_toled,
+    final_toled_sim,
+    final_toled_sim_actual,
+    final_toled_sim_actual_aug,
 ]
 
 named_configs += ablative_configs

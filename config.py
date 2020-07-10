@@ -2,6 +2,7 @@ from pathlib import Path
 import torch
 
 from ablation_config import ablative_configs
+from utils.self_ensemble import ensemble_ops
 
 
 def base_config():
@@ -88,6 +89,12 @@ def base_config():
 
     # Self ensemble
     self_ensemble = False
+    num_ensemble = len(ensemble_ops) + 1
+    save_ensemble_channels = False
+    save_train = True
+
+    if save_ensemble_channels:
+        self_ensemble = True
 
     # Save mat file
     save_mat = False
@@ -317,7 +324,6 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual():
     val_test_epoch_interval = 6
     save_copy_every_epochs = 64
 
-    distdataparallel = True
     # Cosine annealing
     T_0 = 64
     T_mult = 2

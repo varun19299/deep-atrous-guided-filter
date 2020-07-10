@@ -9,7 +9,9 @@ from models.gca_net_improved import GCANet_improved, GCANet_improved_deeper
 from models.gca_net_atrous import (
     GCANet_atrous,
     GCANet_atrous_corrected,
+    GCANet_atrous_stage_2,
     SmoothDilatedResidualAtrousGuidedBlock,
+    SmoothDilatedResidualAtrousGuidedBlockStage2,
 )
 
 # Deep Guided Filter (DGF) utils
@@ -416,6 +418,42 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(nn.Module):
         return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
 
 
+class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(nn.Module):
+    def __init__(self, args, radius=1, dilation=0):
+        super().__init__()
+
+        self.args = args
+        norm = norm_dict[args.norm_layer]
+
+        c = args.guided_map_channels
+        self.guided_map = SmoothDilatedResidualAtrousGuidedBlockStage2(
+            in_channel=3 * args.num_ensemble, channel_num=c, args=args
+        )
+
+        self.lr = GCANet_atrous_corrected(
+            in_c=3 * args.num_ensemble * args.pixelshuffle_ratio ** 2,
+            out_c=3 * args.pixelshuffle_ratio ** 2,
+            args=args,
+        )
+
+        self.gf = ConvGuidedFilter(radius, norm=norm)
+
+        self.downsample = nn.Upsample(
+            scale_factor=0.5, mode="bilinear", align_corners=True
+        )
+
+    def init_lr(self, path):
+        checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        load_state_dict(self.lr, checkpoint["state_dict"])
+
+    def forward(self, x_hr):
+        x_lr = self.downsample(x_hr)
+        x_lr_unpixelshuffled = unpixel_shuffle(x_lr, 2)
+        y_lr = F.pixel_shuffle(self.lr(x_lr_unpixelshuffled), 2)
+
+        return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
+
+
 @ex.automain
 def main(_run):
     from utils.tupperware import tupperware
@@ -423,14 +461,14 @@ def main(_run):
     from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args)
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(args)
     # ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
     # model_state_dict = ckpt["state_dict"]
     # model_state_dict.pop("module.lr.gate.bias", None)
     # model_state_dict.pop("module.lr.gate.weight", None)
     # load_state_dict(model, model_state_dict)
 
-    summary(model, (3, 512, 1024))
+    summary(model, (12, 512, 1024))
 
     # ckpt = torch.load(
     #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"

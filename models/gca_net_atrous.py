@@ -134,6 +134,111 @@ class SmoothDilatedResidualAtrousGuidedBlock(nn.Module):
         return F.leaky_relu(y, 0.2)
 
 
+class SmoothDilatedResidualAtrousGuidedBlockStage2(nn.Module):
+    def __init__(
+        self,
+        in_channel,
+        channel_num,
+        out_channel: int = 3,
+        dialation_start: int = 1,
+        group=1,
+        args=None,
+    ):
+        super().__init__()
+        self.args = args
+
+        norm = norm_dict[args.norm_layer]
+
+        if args.use_atrous:
+            self.norm1 = norm(channel_num // 2)
+            self.norm2 = norm(channel_num // 2)
+            self.norm4 = norm(channel_num // 2)
+            self.norm8 = norm(channel_num // 2)
+        else:
+            self.norm1 = norm(channel_num)
+
+        if args.use_smooth_atrous:
+            self.pre_conv1 = ShareSepConv(2 * dialation_start - 1)
+            self.pre_conv2 = ShareSepConv(4 * dialation_start - 1)
+            self.pre_conv4 = ShareSepConv(8 * dialation_start - 1)
+            self.pre_conv8 = ShareSepConv(16 * dialation_start - 1)
+
+        if args.use_atrous:
+            self.conv1 = nn.Conv2d(
+                in_channel,
+                channel_num // 2,
+                3,
+                1,
+                padding=dialation_start,
+                dilation=dialation_start,
+                bias=False,
+            )
+
+            self.conv2 = nn.Conv2d(
+                in_channel,
+                channel_num // 2,
+                3,
+                1,
+                padding=2 * dialation_start,
+                dilation=2 * dialation_start,
+                groups=group,
+                bias=False,
+            )
+
+            self.conv4 = nn.Conv2d(
+                in_channel,
+                channel_num // 2,
+                3,
+                1,
+                padding=4 * dialation_start,
+                dilation=4 * dialation_start,
+                groups=group,
+                bias=False,
+            )
+
+            self.conv8 = nn.Conv2d(
+                in_channel,
+                channel_num // 2,
+                3,
+                1,
+                padding=8 * dialation_start,
+                dilation=8 * dialation_start,
+                groups=group,
+                bias=False,
+            )
+        else:
+            self.conv1 = nn.Conv2d(in_channel, channel_num, 3, 1, padding=1, bias=False)
+
+        self.x_conv = nn.Conv2d(in_channel, out_channel, 1, 1, padding=0, bias=False)
+
+        self.conv = nn.Conv2d(channel_num * 2, out_channel, 3, 1, padding=1, bias=False)
+        self.norm = norm(out_channel)
+
+    def forward(self, x):
+        if self.args.use_atrous:
+            if self.args.use_smooth_atrous:
+                y1 = F.leaky_relu(self.norm1(self.conv1(self.pre_conv1(x))), 0.2)
+                y2 = F.leaky_relu(self.norm2(self.conv2(self.pre_conv2(x))), 0.2)
+                y4 = F.leaky_relu(self.norm4(self.conv4(self.pre_conv4(x))), 0.2)
+                y8 = F.leaky_relu(self.norm8(self.conv8(self.pre_conv8(x))), 0.2)
+            else:
+                y1 = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
+                y2 = F.leaky_relu(self.norm2(self.conv2(x)), 0.2)
+                y4 = F.leaky_relu(self.norm4(self.conv4(x)), 0.2)
+                y8 = F.leaky_relu(self.norm8(self.conv8(x)), 0.2)
+
+            y = torch.cat((y1, y2, y4, y8), dim=1)
+        else:
+            y = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
+
+        y = self.norm(self.conv(y))
+
+        if self.args.use_residual:
+            y = y + self.x_conv(x)
+
+        return F.leaky_relu(y, 0.2)
+
+
 class SmoothDilatedResidualAtrousBlock(nn.Module):
     def __init__(self, channel_num, dialation_start: int = 1, group=1, args=None):
         super().__init__()
@@ -509,6 +614,61 @@ class GCANet_atrous_corrected(nn.Module):
             )
         else:
             gated_y = y3
+
+        y = F.leaky_relu(self.norm5(self.deconv2(gated_y)), 0.2)
+        y = F.leaky_relu(self.deconv1(y), 0.2)
+
+        return y
+
+
+class GCANet_atrous_stage_2(nn.Module):
+    def __init__(self, in_c=4, out_c=3, args=None):
+        super().__init__()
+
+        self.args = args
+
+        interm_channels = 48
+        residual_adds = 2
+        smooth_dialated_block = SmoothDilatedResidualAtrousBlock
+        residual_block = ResidualFFABlock
+        norm = norm_dict[args.norm_layer]
+
+        self.conv1 = nn.Conv2d(in_c, interm_channels, 3, 1, 1, bias=False)
+        self.norm1 = norm(interm_channels)
+
+        self.res1_a = smooth_dialated_block(
+            interm_channels, dialation_start=1, args=args
+        )
+        self.res1_b = smooth_dialated_block(
+            interm_channels, dialation_start=1, args=args
+        )
+        self.res1_c = smooth_dialated_block(
+            interm_channels, dialation_start=1, args=args
+        )
+
+        self.res_final = residual_block(interm_channels, args=args)
+
+        if args.use_gated:
+            self.gate = nn.Conv2d(
+                interm_channels * residual_adds, residual_adds, 3, 1, 1, bias=True
+            )
+
+        self.deconv2 = nn.Conv2d(interm_channels, interm_channels, 3, 1, 1)
+        self.norm5 = norm(interm_channels)
+        self.deconv1 = nn.Conv2d(interm_channels, out_c, 1)
+
+    def forward(self, x):
+        y1 = F.leaky_relu(self.norm1(self.conv1(x)), 0.2)
+
+        y = self.res1_a(y1)
+        y = self.res1_b(y)
+        y2 = self.res1_c(y)
+
+        if self.args.use_gated:
+            gates = self.gate(torch.cat((y1, y2), dim=1))
+            gated_y = y1 * gates[:, [0], :, :] + y2 * gates[:, [1], :, :]
+        else:
+            gated_y = y2
 
         y = F.leaky_relu(self.norm5(self.deconv2(gated_y)), 0.2)
         y = F.leaky_relu(self.deconv1(y), 0.2)

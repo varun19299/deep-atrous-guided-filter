@@ -13,7 +13,7 @@ import cv2
 # Torch Libs
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from lpips_pytorch import LPIPS
+from PerceptualSimilarity.models import PerceptualLoss
 
 # Modules
 from dataloader import get_dataloaders
@@ -59,19 +59,16 @@ def main(_run):
     # Set device, init dirs
     device, source_device = set_device(args)
     dir_init(args)
-
     # Get data
     data = get_dataloaders(args)
-    data.val_loader = data.train_loader
 
     # Model
     G, _ = get_model.model(args)
     G = G.to(device)
 
     # LPIPS Criterion
-    lpips_criterion = LPIPS(
-        net_type="alex",  # choose a network type from ['alex', 'squeeze', 'vgg']
-        version="0.1",  # Currently, v0.1 is supported
+    lpips_criterion = PerceptualLoss(
+        model="net-lin", net="alex", use_gpu=True, gpu_ids=[device]
     ).to(device)
 
     # Load Models
@@ -89,11 +86,23 @@ def main(_run):
         global_step = start_epoch * len(data.train_loader) * args.batch_size
 
     _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0, "LPIPS": 0.0}
-    avg_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict, args=args)
+
+    avg_train_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict.copy(), args=args)
+
+    avg_val_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict, args=args)
 
     logging.info(f"Loaded experiment {args.exp_name} trained for {start_epoch} epochs.")
 
-    # Val and test paths
+    # Train, val and test paths
+    if args.self_ensemble:
+        train_path = (
+            args.output_dir
+            / f"train_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
+        )
+    else:
+        train_path = args.output_dir / f"val_{args.inference_mode}_epoch_{start_epoch}"
+    train_path.mkdir(exist_ok=True, parents=True)
+
     if args.self_ensemble:
         val_path = (
             args.output_dir
@@ -115,14 +124,14 @@ def main(_run):
     with torch.no_grad():
         G.eval()
 
-        if data.val_loader:
+        if data.train_loader and args.save_train:
             # Run val for an epoch
-            avg_metrics.reset()
+            avg_val_metrics.reset()
             pbar = tqdm(
-                range(len(data.val_loader) * args.batch_size), dynamic_ncols=True
+                range(len(data.train_loader) * args.batch_size), dynamic_ncols=True
             )
 
-            for i, batch in enumerate(data.val_loader):
+            for i, batch in enumerate(data.train_loader):
                 metrics_dict = defaultdict(float)
 
                 source, target, filename = batch
@@ -144,17 +153,29 @@ def main(_run):
 
                         output_ensembled.append(output_t)
 
+                    output_channel_concat = torch.cat(output_ensembled, dim=1).squeeze(
+                        0
+                    )
                     output_ensembled = torch.cat(output_ensembled, dim=0)
+
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
-                # LPIPS
-                # TODO: check if results agree with udc_paper
-                metrics_dict["LPIPS"] += lpips_criterion(output, target)
+                if args.save_ensemble_channels:
+                    name = filename[0].replace(".png", ".npy")
+                    path_output = train_path / f"channel_concat_{name}"
+                    np.save(path_output, output_channel_concat.cpu().numpy())
 
                 # PSNR
-                metrics_dict["PSNR"] += PSNR(
-                    (output * 255.0).int() / 255.0, (target * 255.0).int() / 255.0
-                )
+                output_quant = (output.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                output_quant = output_quant.sub(0.5).mul(2)
+                target_quant = (target.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                target_quant = target_quant.sub(0.5).mul(2)
+                metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
+
+                # LPIPS
+                metrics_dict["LPIPS"] += lpips_criterion(
+                    output_quant, target_quant
+                ).item()
 
                 for e in range(args.batch_size):
                     # Compute SSIM
@@ -192,19 +213,124 @@ def main(_run):
                     )
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
-                avg_metrics += metrics_dict
+                avg_train_metrics += metrics_dict
 
                 pbar.update(args.batch_size)
                 pbar.set_description(
-                    f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_metrics.loss_dict['SSIM']:.3f} | LPIPS: {avg_metrics.loss_dict['SSIM']:.3f}"
+                    f"Train Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_train_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_train_metrics.loss_dict['SSIM']:.3f} | LPIPS: {avg_train_metrics.loss_dict['LPIPS']:.3f}"
+                )
+
+            with open(train_path / "metrics.txt", "w") as f:
+                L = [
+                    f"exp_name:{args.exp_name} trained for {start_epoch} epochs\n",
+                    "Train Metrics \n\n",
+                ]
+                L = L + [f"{k}:{v}\n" for k, v in avg_val_metrics.loss_dict.items()]
+                f.writelines(L)
+
+        if data.val_loader:
+            # Run val for an epoch
+            avg_val_metrics.reset()
+            pbar = tqdm(
+                range(len(data.val_loader) * args.batch_size), dynamic_ncols=True
+            )
+
+            for i, batch in enumerate(data.val_loader):
+                metrics_dict = defaultdict(float)
+
+                source, target, filename = batch
+                source, target = (source.to(device), target.to(device))
+
+                output = G(source)
+
+                if args.self_ensemble:
+                    output_ensembled = [output]
+
+                    for k in ensemble_ops.keys():
+                        # Forward transform
+                        source_t = ensemble_ops[k][0](source)
+
+                        output_t = G(source_t)
+
+                        # Inverse transform
+                        output_t = ensemble_ops[k][1](output_t)
+
+                        output_ensembled.append(output_t)
+
+                    output_channel_concat = torch.cat(output_ensembled, dim=1).squeeze(
+                        0
+                    )
+                    output_ensembled = torch.cat(output_ensembled, dim=0)
+
+                    output = torch.mean(output_ensembled, dim=0, keepdim=True)
+
+                if args.save_ensemble_channels:
+                    name = filename[0].replace(".png", ".npy")
+                    path_output = val_path / f"channel_concat_{name}"
+                    np.save(path_output, output_channel_concat.cpu().numpy())
+
+                # PSNR
+                output_quant = (output.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                output_quant = output_quant.sub(0.5).mul(2)
+                target_quant = (target.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                target_quant = target_quant.sub(0.5).mul(2)
+                metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
+
+                # LPIPS
+                # TODO: check if results agree with udc_paper
+                metrics_dict["LPIPS"] += lpips_criterion(
+                    output_quant, target_quant
+                ).item()
+
+                for e in range(args.batch_size):
+                    # Compute SSIM
+                    target_numpy = (
+                        ((target * 255.0).int() / 255.0)[e]
+                        .mul(0.5)
+                        .add(0.5)
+                        .permute(1, 2, 0)
+                        .cpu()
+                        .detach()
+                        .numpy()
+                    )
+
+                    output_numpy = (
+                        ((output * 255.0).int() / 255.0)[e]
+                        .mul(0.5)
+                        .add(0.5)
+                        .permute(1, 2, 0)
+                        .cpu()
+                        .detach()
+                        .numpy()
+                    )
+                    metrics_dict["SSIM"] += ssim(
+                        target_numpy, output_numpy, multichannel=True, data_range=1.0
+                    )
+
+                    # Dump to output folder
+                    # Phase and amplitude are nested
+                    name = filename[e]
+                    path_output = val_path / name
+
+                    cv2.imwrite(
+                        str(path_output),
+                        (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
+                    )
+
+                metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
+                avg_val_metrics += metrics_dict
+
+                pbar.update(args.batch_size)
+                pbar.set_description(
+                    f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_val_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_val_metrics.loss_dict['SSIM']:.3f} | LPIPS: {avg_val_metrics.loss_dict['LPIPS']:.3f}"
                 )
 
             with open(val_path / "metrics.txt", "w") as f:
                 L = [
                     f"exp_name:{args.exp_name} trained for {start_epoch} epochs\n",
-                    "Metrics \n\n",
+                    "Val Metrics \n\n",
                 ]
-                L = L + [f"{k}:{v}\n" for k, v in avg_metrics.loss_dict.items()]
+                L = L + [f"{k}:{v}\n" for k, v in avg_val_metrics.loss_dict.items()]
                 f.writelines(L)
 
         if data.test_loader:
@@ -239,8 +365,17 @@ def main(_run):
 
                         output_ensembled.append(output_t)
 
+                    output_channel_concat = torch.cat(output_ensembled, dim=1).squeeze(
+                        0
+                    )
                     output_ensembled = torch.cat(output_ensembled, dim=0)
+
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
+
+                if args.save_ensemble_channels:
+                    name = filename[0].replace(".png", ".npy")
+                    path_output = test_path / f"channel_concat_{name}"
+                    np.save(path_output, output_channel_concat.cpu().numpy())
 
                 for e in range(args.batch_size):
                     output_numpy = (

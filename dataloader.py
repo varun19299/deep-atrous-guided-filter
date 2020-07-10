@@ -70,8 +70,7 @@ class OLEDDataset(Dataset):
             )
         self.is_local_rank_0 = is_local_rank_0
 
-    def _load_dataset(self):
-        glob_str = "*.png"
+    def _load_dataset(self, glob_str = "*.png"):
 
         if self.source_dir:
             source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]

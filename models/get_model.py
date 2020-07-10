@@ -9,6 +9,7 @@ from models.guided_filtering_net import (
     DeepGuidedFilterGuidedMapConvGFPixelShuffle,
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved,
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous,
+    DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2,
 )
 
 
@@ -88,6 +89,17 @@ def model(args, source_device=None, target_device=None):
     ]:
         return (
             DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "aug-stage-2":
+        return (
+            DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(args),
             Discriminator(
                 args,
                 source_device=source_device,

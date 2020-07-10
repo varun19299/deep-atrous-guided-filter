@@ -15,6 +15,7 @@ import torch.distributed as dist
 import cv2
 from config import initialise
 import random
+import numpy as np
 
 if TYPE_CHECKING:
     from utils.typing_alias import *
@@ -73,7 +74,7 @@ class OLEDDataset(Dataset):
     def _load_dataset(self, glob_str="*.png"):
 
         if self.source_dir:
-            if args.use_source_npy:
+            if self.args.use_source_npy:
                 source_paths = list(self.source_dir.glob("*.npy"))[: self.max_len]
             else:
                 source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]
@@ -81,7 +82,14 @@ class OLEDDataset(Dataset):
             source_paths = []
 
         if self.target_dir:
-            target_paths = [self.target_dir / file.name for file in source_paths]
+            if self.args.use_source_npy:
+                target_paths = [
+                    self.target_dir
+                    / file.name.replace(".npy", ".png").replace("channel_concat_", "")
+                    for file in source_paths
+                ]
+            else:
+                target_paths = [self.target_dir / file.name for file in source_paths]
         else:
             target_paths = []
 
@@ -93,7 +101,7 @@ class OLEDDataset(Dataset):
     def __getitem__(self, index):
         source_path = self.source_paths[index]
 
-        if args.use_source_npy:
+        if self.args.use_source_npy:
             source = np.load(source_path)
             source = torch.tensor(source).float()
             if self.mode == "train":

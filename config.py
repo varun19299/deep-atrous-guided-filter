@@ -637,6 +637,52 @@ def guided_filter_l1_tanh_pixelshuffle_forward_poled():
     lambda_CoBi_RGB = 1.0
 
 
+def aug_stage_2():
+    exp_name = "aug_stage_2"
+
+    batch_size = 1
+    do_augment = False
+    num_epochs = 448
+
+    # Data
+    use_source_npy = True
+    image_dir = Path("data")
+    output_dir = Path("outputs")
+    train_source_dir = (
+        output_dir
+        / "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper-sim-actual"
+        / "train_latest_epoch_447_self_ensemble"
+    )
+    train_target_dir = image_dir / "Poled_train" / "HQ"
+
+    val_source_dir = None
+    val_target_dir = None
+
+    test_source_dir = (
+        output_dir
+        / "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper-sim-actual"
+        / "test_latest_epoch_447_self_ensemble"
+    )
+
+    # Model args
+    model = "aug-stage-2"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    guided_map_is_atrous_residual = True
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
 named_configs = [
     dgf_poled,
     dgf_poled_pixelshuffle,
@@ -655,6 +701,7 @@ named_configs = [
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual,
     guided_filter_l1_tanh_pixelshuffle_forward_glass,
     guided_filter_l1_tanh_pixelshuffle_forward_poled,
+    aug_stage_2,
 ]
 
 named_configs += ablative_configs

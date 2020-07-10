@@ -166,9 +166,9 @@ def main(_run):
                     np.save(path_output, output_channel_concat.cpu().numpy())
 
                 # PSNR
-                output_quant = (output.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                output_quant = (output.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
                 output_quant = output_quant.sub(0.5).mul(2)
-                target_quant = (target.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                target_quant = (target.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
                 target_quant = target_quant.sub(0.5).mul(2)
                 metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
 
@@ -270,9 +270,9 @@ def main(_run):
                     np.save(path_output, output_channel_concat.cpu().numpy())
 
                 # PSNR
-                output_quant = (output.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                output_quant = (output.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
                 output_quant = output_quant.sub(0.5).mul(2)
-                target_quant = (target.mul(0.5).add(0.5) * 255.0).int() / 255.0
+                target_quant = (target.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
                 target_quant = target_quant.sub(0.5).mul(2)
                 metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
 

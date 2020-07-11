@@ -1,6 +1,5 @@
 *.pyc
 
-PerceptualSimilarity/*
 runs/*
 outputs/*
 ckpts/*

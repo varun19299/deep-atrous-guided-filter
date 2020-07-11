@@ -114,6 +114,9 @@ class OLEDDataset(Dataset):
             elif self.mode == "val":
                 target_path = self.target_paths[index]
                 target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
+                target = cv2.resize(
+                    target, (self.args.image_width, self.args.image_height)
+                )
 
             if self.mode in ["train", "val"]:
                 target = torch.tensor(target).float().permute(2, 0, 1)
@@ -161,8 +164,13 @@ class OLEDDataset(Dataset):
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
             target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
 
+            source = cv2.resize(source, (self.args.image_width, self.args.image_height))
+            target = cv2.resize(target, (self.args.image_width, self.args.image_height))
+
         elif self.mode == "test":
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
+
+            source = cv2.resize(source, (self.args.image_width, self.args.image_height))
 
         source = torch.tensor(source).float().permute(2, 0, 1)
         source = (source - 0.5) * 2

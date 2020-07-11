@@ -59,10 +59,10 @@ def ours_toled():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -163,10 +163,10 @@ def ours_toled_normal_conv():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -206,10 +206,10 @@ def ours_toled_no_smooth():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -310,10 +310,10 @@ def ours_toled_no_residual_no_gated():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -353,10 +353,10 @@ def ours_toled_no_gated():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -514,10 +514,10 @@ def ours_toled_no_norm():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -556,10 +556,10 @@ def ours_toled_batch_norm():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -598,10 +598,10 @@ def ours_toled_instance_norm():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -640,10 +640,10 @@ def ours_toled_adaptive_batch_norm():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -746,10 +746,10 @@ def ours_toled_no_CA():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -789,10 +789,10 @@ def ours_toled_ECA():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -930,10 +930,10 @@ def ours_toled_l1_ms_ssim():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -974,10 +974,10 @@ def ours_toled_l1_percep():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64
@@ -1019,10 +1019,10 @@ def ours_toled_l1_percep_adv():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
     # Cosine annealing
     T_0 = 64

@@ -24,13 +24,10 @@ def base_config():
     train_source_dir = image_dir / "Poled_train" / "LQ"
     train_target_dir = image_dir / "Poled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
-    # val_source_dir = image_dir / "Poled_val" / "LQ"
-    # val_target_dir = image_dir / "Poled_val" / "HQ"
+    val_source_dir = image_dir / "Poled_val" / "LQ"
+    val_target_dir = image_dir / "Poled_val" / "HQ"
 
-    test_source_dir = image_dir / "Poled_val" / "LQ"
-    # test_source_dir = image_dir / "Poled_test" / "LQ"
+    test_source_dir = image_dir / "Poled_test" / "LQ"
 
     static_val_image = "1.png"
     static_test_image = "1.png"
@@ -98,7 +95,7 @@ def base_config():
     self_ensemble = False
     num_ensemble = len(ensemble_ops) + 1
     save_ensemble_channels = False
-    save_train = True
+    save_train = False
 
     if save_ensemble_channels:
         self_ensemble = True
@@ -859,13 +856,10 @@ def final_toled():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
-    # val_source_dir = image_dir / "Toled_val" / "LQ"
-    # val_target_dir = image_dir / "Toled_val" / "HQ"
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
-    # test_source_dir = image_dir / "Toled_test" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
 
 def final_toled_sim():
@@ -939,13 +933,10 @@ def final_toled_sim_actual():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
-    # val_source_dir = image_dir / "Toled_val" / "LQ"
-    # val_target_dir = image_dir / "Toled_val" / "HQ"
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
-    # test_source_dir = image_dir / "Toled_test" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
 
 def final_toled_sim_actual_aug():

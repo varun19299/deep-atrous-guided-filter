@@ -85,7 +85,7 @@ def main(_run):
     if not global_step:
         global_step = start_epoch * len(data.train_loader) * args.batch_size
 
-    _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0, "LPIPS": 0.0}
+    _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0, "LPIPS_01": 0.0, "LPIPS_11": 0.0}
 
     avg_train_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict.copy(), args=args)
 
@@ -173,14 +173,18 @@ def main(_run):
                 metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
 
                 # LPIPS
-                metrics_dict["LPIPS"] += lpips_criterion(
+                metrics_dict["LPIPS_01"] += lpips_criterion(
                     output_quant.mul(0.5).add(0.5), target_quant.mul(0.5).add(0.5)
+                ).item()
+
+                metrics_dict["LPIPS_11"] += lpips_criterion(
+                    output_quant, target_quant
                 ).item()
 
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        ((target_quant * 255.0).int() / 255.0)[e]
+                        target_quant[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -190,7 +194,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        ((output_quant * 255.0).int() / 255.0)[e]
+                        output_quant[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -217,7 +221,7 @@ def main(_run):
 
                 pbar.update(args.batch_size)
                 pbar.set_description(
-                    f"Train Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_train_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_train_metrics.loss_dict['SSIM']:.3f} | LPIPS: {avg_train_metrics.loss_dict['LPIPS']:.3f}"
+                    f"Train Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_train_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_train_metrics.loss_dict['SSIM']:.3f} | LPIPS 01: {avg_train_metrics.loss_dict['LPIPS_01']:.3f} | LPIPS 11: {avg_train_metrics.loss_dict['LPIPS_11']:.3f}"
                 )
 
             with open(train_path / "metrics.txt", "w") as f:
@@ -278,14 +282,18 @@ def main(_run):
 
                 # LPIPS
                 # TODO: check if results agree with udc_paper
-                metrics_dict["LPIPS"] += lpips_criterion(
+                metrics_dict["LPIPS_01"] += lpips_criterion(
                     output_quant.mul(0.5).add(0.5), target_quant.mul(0.5).add(0.5)
+                ).item()
+
+                metrics_dict["LPIPS_11"] += lpips_criterion(
+                    output_quant, target_quant
                 ).item()
 
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        ((target_quant * 255.0).int() / 255.0)[e]
+                        target_quant[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -295,7 +303,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        ((output_quant * 255.0).int() / 255.0)[e]
+                        output_quant[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -322,7 +330,7 @@ def main(_run):
 
                 pbar.update(args.batch_size)
                 pbar.set_description(
-                    f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_val_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_val_metrics.loss_dict['SSIM']:.3f} | LPIPS: {avg_val_metrics.loss_dict['LPIPS']:.3f}"
+                    f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_val_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_val_metrics.loss_dict['SSIM']:.3f} | LPIPS 01: {avg_val_metrics.loss_dict['LPIPS_01']:.3f} | LPIPS 11: {avg_val_metrics.loss_dict['LPIPS_11']:.3f}"
                 )
 
             with open(val_path / "metrics.txt", "w") as f:

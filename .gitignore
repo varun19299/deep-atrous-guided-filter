@@ -1,8 +1,11 @@
 *.pyc
 
 __pycache__/*
+*/__pycache__
 runs/*
 outputs/*
 ckpts/*
 data/*
 .idea/*
+Icon
+*/Icon

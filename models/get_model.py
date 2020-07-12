@@ -10,6 +10,7 @@ from models.guided_filtering_net import (
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAImproved,
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous,
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2,
+    LRNet,
 )
 
 
@@ -100,6 +101,17 @@ def model(args, source_device=None, target_device=None):
     elif args.model == "aug-stage-2":
         return (
             DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(args),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "lr-net":
+        return (
+            LRNet(args),
             Discriminator(
                 args,
                 source_device=source_device,

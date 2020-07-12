@@ -46,6 +46,11 @@ def base_config():
     # augment
     do_augment = True
 
+    # crop patches
+    use_patches = False
+    crop_height = None
+    crop_width = None
+
     # ---------------------------------------------------------------------------- #
     # Train Configs
     # ---------------------------------------------------------------------------- #
@@ -218,10 +223,10 @@ def dgf_toled():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
 
 def dgf_toled_pixelshuffle():
@@ -242,10 +247,10 @@ def dgf_toled_pixelshuffle():
     train_source_dir = image_dir / "Toled_train" / "LQ"
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
-    val_source_dir = None
-    val_target_dir = None
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
 
-    test_source_dir = image_dir / "Toled_val" / "LQ"
+    test_source_dir = image_dir / "Toled_test" / "LQ"
 
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
@@ -690,9 +695,9 @@ def aug_stage_2():
 
 
 def final_poled():
-    exp_name = "atrous-guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper"
+    exp_name = "final-poled"
 
-    batch_size = 1
+    batch_size = 1 
     do_augment = True
     num_epochs = 960
 

@@ -433,8 +433,8 @@ def main(_run):
                                 f"Filename/Val_{e + 1}", filename[e], global_step
                             )
 
-                        for e, filename in enumerate(filename_static):
-                            if filename == args.static_val_image:
+                        for e, name in enumerate(filename_static):
+                            if name == args.static_val_image:
                                 source_vis = source_static[e].mul(0.5).add(0.5)
                                 target_vis = target_static[e].mul(0.5).add(0.5)
                                 output_vis = output_static[e].mul(0.5).add(0.5)
@@ -456,7 +456,9 @@ def main(_run):
                                 )
 
                                 writer.add_text(
-                                    f"Filename/Val_Static", filename[e], global_step
+                                    f"Filename/Val_Static",
+                                    filename_static[e],
+                                    global_step,
                                 )
 
                                 break
@@ -535,8 +537,8 @@ def main(_run):
                                 f"Filename/Test_{e + 1}", filename[e], global_step
                             )
 
-                        for e, filename in enumerate(filename_static):
-                            if filename == args.static_test_image:
+                        for e, name in enumerate(filename_static):
+                            if name == args.static_test_image:
                                 source_vis = source_static[e]
                                 output_vis = output_static[e]
 

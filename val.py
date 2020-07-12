@@ -100,7 +100,7 @@ def main(_run):
             / f"train_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
         )
     else:
-        train_path = args.output_dir / f"val_{args.inference_mode}_epoch_{start_epoch}"
+        train_path = args.output_dir / f"train_{args.inference_mode}_epoch_{start_epoch}"
     train_path.mkdir(exist_ok=True, parents=True)
 
     if args.self_ensemble:

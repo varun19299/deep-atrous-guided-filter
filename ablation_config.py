@@ -1031,6 +1031,218 @@ def ours_toled_l1_percep_adv():
     learning_rate = 3e-4
 
 
+# Guided filter
+def lr_net_poled():
+    exp_name = "lr-net-poled-512"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "lr-net"
+    pixelshuffle_ratio = 2
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    use_patches = True  # Turn this off while using val.py
+    crop_height = 256
+    crop_width = 512
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_1x1_poled():
+    exp_name = "guided-filter-1x1-poled"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 1
+    guided_map_channels = 16
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_3x3_poled():
+    exp_name = "guided-filter-3x3-poled"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def lr_net_toled():
+    exp_name = "lr-net-toled-512"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "lr-net"
+    pixelshuffle_ratio = 2
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    use_patches = True  # Turn this off while using val.py
+    crop_height = 256
+    crop_width = 512
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_test" / "LQ"
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def guided_filter_1x1_toled():
+    exp_name = "guided-filter-1x1-toled"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 1
+    guided_map_channels = 16
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_test" / "LQ"
+
+    learning_rate = 3e-4
+
+
+def guided_filter_3x3_toled():
+    exp_name = "guided-filter-3x3-toled"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-atrous-corrected"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_test" / "LQ"
+
+    learning_rate = 3e-4
+
+
 ablative_configs = [
     ours_poled,
     ours_toled,
@@ -1065,4 +1277,11 @@ ablative_configs = [
     ours_toled_l1_ms_ssim,
     ours_toled_l1_percep,
     ours_toled_l1_percep_adv,
+    # Guided filter effect
+    lr_net_poled,
+    guided_filter_1x1_poled,
+    guided_filter_3x3_poled,
+    lr_net_toled,
+    guided_filter_1x1_toled,
+    guided_filter_3x3_toled,
 ]

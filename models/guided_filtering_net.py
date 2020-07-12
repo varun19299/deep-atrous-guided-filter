@@ -454,6 +454,27 @@ class DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(nn.Module):
         return F.tanh(self.gf(self.guided_map(x_lr), y_lr, self.guided_map(x_hr)))
 
 
+class LRNet(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+
+        self.args = args
+
+        self.lr = GCANet_atrous_corrected(
+            in_c=3 * args.num_ensemble * args.pixelshuffle_ratio ** 2,
+            out_c=3 * args.pixelshuffle_ratio ** 2,
+            args=args,
+        )
+
+    def forward(self, x_hr):
+        x_hr_unpixelshuffled = unpixel_shuffle(x_hr, self.args.pixelshuffle_ratio)
+        y_hr = F.pixel_shuffle(
+            self.lr(x_hr_unpixelshuffled), self.args.pixelshuffle_ratio
+        )
+
+        return y_hr
+
+
 @ex.automain
 def main(_run):
     from utils.tupperware import tupperware
@@ -461,14 +482,15 @@ def main(_run):
     from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(args)
+    model = LRNet(args)
+    # model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(args)
     # ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
     # model_state_dict = ckpt["state_dict"]
     # model_state_dict.pop("module.lr.gate.bias", None)
     # model_state_dict.pop("module.lr.gate.weight", None)
     # load_state_dict(model, model_state_dict)
 
-    summary(model, (12, 512, 1024))
+    summary(model, (12, 256, 512))
 
     # ckpt = torch.load(
     #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"

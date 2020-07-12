@@ -135,6 +135,31 @@ class OLEDDataset(Dataset):
             source = cv2.resize(source, (self.args.image_width, self.args.image_height))
             target = cv2.resize(target, (self.args.image_width, self.args.image_height))
 
+            # Crop a patch
+            if self.args.use_crop:
+                assert (self.args.crop_height < self.args.image_height) and (
+                    self.args.crop_width < self.args.image_width
+                )
+                # Random x
+                random_x = random.randint(
+                    0, self.args.image_height - self.args.crop_height - 1
+                )
+
+                # Random y
+                random_y = random.randint(
+                    0, self.args.image_width - self.args.crop_width - 1
+                )
+
+                source = source[
+                    random_x : random_x + self.args.crop_height,
+                    random_y : random_y + self.args.crop_width,
+                ]
+
+                target = target[
+                    random_x : random_x + self.args.crop_height,
+                    random_y : random_y + self.args.crop_width,
+                ]
+
             # Data augmentation
             if self.args.do_augment:
                 # Vertical flip
@@ -152,13 +177,6 @@ class OLEDDataset(Dataset):
                     source = cv2.rotate(source, cv2.ROTATE_180)
                     target = cv2.rotate(target, cv2.ROTATE_180)
 
-                source = cv2.resize(
-                    source, (self.args.image_width, self.args.image_height)
-                )
-                target = cv2.resize(
-                    target, (self.args.image_width, self.args.image_height)
-                )
-
         elif self.mode == "val":
             target_path = self.target_paths[index]
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
@@ -167,10 +185,55 @@ class OLEDDataset(Dataset):
             source = cv2.resize(source, (self.args.image_width, self.args.image_height))
             target = cv2.resize(target, (self.args.image_width, self.args.image_height))
 
+            # Crop a patch
+            if self.args.use_crop:
+                assert (self.args.crop_height < self.args.image_height) and (
+                    self.args.crop_width < self.args.image_width
+                )
+                # Random x
+                random_x = random.randint(
+                    0, self.args.image_height - self.args.crop_height - 1
+                )
+
+                # Random y
+                random_y = random.randint(
+                    0, self.args.image_width - self.args.crop_width - 1
+                )
+
+                source = source[
+                    random_x : random_x + self.args.crop_height,
+                    random_y : random_y + self.args.crop_width,
+                ]
+
+                target = target[
+                    random_x : random_x + self.args.crop_height,
+                    random_y : random_y + self.args.crop_width,
+                ]
+
         elif self.mode == "test":
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
 
             source = cv2.resize(source, (self.args.image_width, self.args.image_height))
+
+            # Crop a patch
+            if self.args.use_crop:
+                assert (self.args.crop_height < self.args.image_height) and (
+                    self.args.crop_width < self.args.image_width
+                )
+                # Random x
+                random_x = random.randint(
+                    0, self.args.image_height - self.args.crop_height - 1
+                )
+
+                # Random y
+                random_y = random.randint(
+                    0, self.args.image_width - self.args.crop_width - 1
+                )
+
+                source = source[
+                    random_x : random_x + self.args.crop_height,
+                    random_y : random_y + self.args.crop_width,
+                ]
 
         source = torch.tensor(source).float().permute(2, 0, 1)
         source = (source - 0.5) * 2

@@ -46,8 +46,7 @@ def ones_like(x: "Tensor") -> "Tensor":
 
 
 class GLoss(nn.Module):
-    def __init__(
-        self, args ):
+    def __init__(self, args):
         super(GLoss, self).__init__()
 
         self.args = args
@@ -56,9 +55,7 @@ class GLoss(nn.Module):
         )
 
         if args.lambda_ms_ssim:
-            self.ms_ssim_module = MS_SSIM(
-                data_range=1.0, size_average=True, channel=3
-            )
+            self.ms_ssim_module = MS_SSIM(data_range=1.0, size_average=True, channel=3)
             self.win = _fspecial_gauss_1d(11, 1.5)
 
         if args.lambda_perception:
@@ -128,8 +125,7 @@ class GLoss(nn.Module):
         # VGG 19
         if self.args.lambda_perception:
             self.perception_loss += (
-                self._perception_metric(output, target).to(device)
-                * self.args.lambda_perception
+                self._perception_metric(output, target) * self.args.lambda_perception
             )
 
         # https://github.com/VainF/pytorch-msssim

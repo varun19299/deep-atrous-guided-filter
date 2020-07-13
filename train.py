@@ -248,7 +248,7 @@ def main(_run):
                 g_lr_scheduler.step(epoch + i / len(data.train_loader))
 
                 if args.lambda_adversarial:
-                    d_lr_scheduler.step(epoch - +i / len(data.train_loader))
+                    d_lr_scheduler.step(epoch +i / len(data.train_loader))
 
                 if is_local_rank_0:
                     # Train PSNR

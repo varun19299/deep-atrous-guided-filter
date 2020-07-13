@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from utils.typing_alias import *
 
+
 def pprint_args(args):
     """
     Pretty print args
@@ -254,20 +255,19 @@ def save_weights(
             path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
             torch.save(D_state, path_D)
 
-            if (
-                (epoch + 2) % args.save_copy_every_epochs == 0
-                and tag == "latest"
-                and is_sys_allowed
-            ):
-                save_filename_D = f"Epoch_{epoch}_{save_filename_D}"
+            # Specific saving
+            if tag == "latest":
+                for i in range(1, args.save_num_snapshots + 1):
+                    if (epoch + i) % args.save_copy_every_epochs == 0:
+                        save_filename_D = f"Epoch_{epoch}_{save_filename_D}"
 
-            path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
-            torch.save(D_state, path_D)
+                        path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
 
-            if args.tpu_distributed:
-                xm.save(D_state, path_D)
-            else:
-                torch.save(D_state, path_D)
+                        if args.tpu_distributed:
+                            xm.save(D_state, path_D)
+                        else:
+                            torch.save(D_state, path_D)
+
     else:
         if is_local_rank_0:
             logging.info(f"Epoch {epoch + 1} NOT saving weights")

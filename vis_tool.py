@@ -64,15 +64,16 @@ def transform_img(img, roi_ll, name, inset_dir):
 
 @ex.automain
 def main(_run):
-    data_dir = Path("../data/")
-    output_dir = Path("../outputs/")
-    out_name = "16.png"
-    inset_dir = Path(f"../insets/{out_name.replace('.png','')}")
-    inset_dir.mkdir(exist_ok=True, parents=True)
-
     # Which dataset
     dataset = "poled"
     set = "val"
+
+    data_dir = Path("../data/")
+    output_dir = Path("../outputs/")
+    out_name = "8.png"
+
+    inset_dir = Path(f"../insets/{out_name.replace('.png','')}_{set}")
+    inset_dir.mkdir(exist_ok=True, parents=True)
 
     meas_dir = data_dir / f"{dataset.capitalize()}_{set}" / "LQ"
     dgf_dir = output_dir / f"dgf-{dataset}" / f"{set}_latest_epoch_447"

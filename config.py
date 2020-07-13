@@ -697,7 +697,7 @@ def aug_stage_2():
 def final_poled():
     exp_name = "final-poled"
 
-    batch_size = 1 
+    batch_size = 1
     do_augment = True
     num_epochs = 960
 
@@ -789,7 +789,7 @@ def final_poled_sim_actual_aug():
 
     batch_size = 1
     do_augment = False
-    num_epochs = 448
+    num_epochs = 960
 
     # Data
     use_source_npy = True
@@ -820,6 +820,12 @@ def final_poled_sim_actual_aug():
     log_interval = 25
     val_test_epoch_interval = 6
     save_copy_every_epochs = 64
+    use_FFA = False
+    use_ECA = True
+
+    # # Loss
+    # lambda_image = 1 - 0.84
+    # lambda_ms_ssim = 0.84
 
     # Cosine annealing
     T_0 = 64
@@ -883,7 +889,7 @@ def final_toled_sim():
 
     num_threads = batch_size * 2
     log_interval = 25
-    val_test_epoch_interval = 3
+    val_test_epoch_interval = 6
     save_copy_every_epochs = 16
 
     # ---------------------------------------------------------------------------- #
@@ -921,7 +927,7 @@ def final_toled_sim_actual():
 
     num_threads = batch_size * 2
     log_interval = 25
-    val_test_epoch_interval = 6
+    val_test_epoch_interval = 10
     save_copy_every_epochs = 64
 
     # Cosine annealing
@@ -949,7 +955,7 @@ def final_toled_sim_actual_aug():
 
     batch_size = 1
     do_augment = False
-    num_epochs = 448
+    num_epochs = 960
 
     # Data
     use_source_npy = True
@@ -975,11 +981,17 @@ def final_toled_sim_actual_aug():
     guided_map_kernel_size = 3
     guided_map_channels = 16
     guided_map_is_atrous_residual = True
+    use_FFA = False
+    use_ECA = True
 
     num_threads = batch_size * 2
     log_interval = 25
     val_test_epoch_interval = 6
     save_copy_every_epochs = 64
+
+    # Loss
+    # lambda_image = 1 - 0.84
+    # lambda_ms_ssim = 0.84
 
     # Cosine annealing
     T_0 = 64

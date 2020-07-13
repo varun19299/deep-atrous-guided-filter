@@ -437,7 +437,9 @@ def main(_run):
                                 )
 
                                 writer.add_text(
-                                    f"Filename/Val_Static", filename[e], global_step
+                                    f"Filename/Val_Static",
+                                    filename_static[e],
+                                    global_step,
                                 )
 
                                 break

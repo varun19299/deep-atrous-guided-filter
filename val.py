@@ -20,7 +20,7 @@ from dataloader import get_dataloaders
 from utils.dir_helper import dir_init
 from utils.tupperware import tupperware
 from models import get_model
-from metrics import PSNR
+from metrics import PSNR, PSNR_quant
 from config import initialise
 from skimage.metrics import structural_similarity as ssim
 
@@ -100,7 +100,9 @@ def main(_run):
             / f"train_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
         )
     else:
-        train_path = args.output_dir / f"train_{args.inference_mode}_epoch_{start_epoch}"
+        train_path = (
+            args.output_dir / f"train_{args.inference_mode}_epoch_{start_epoch}"
+        )
     train_path.mkdir(exist_ok=True, parents=True)
 
     if args.self_ensemble:
@@ -166,11 +168,13 @@ def main(_run):
                     np.save(path_output, output_channel_concat.cpu().numpy())
 
                 # PSNR
-                output_quant = (output.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
-                output_quant = output_quant.sub(0.5).mul(2)
-                target_quant = (target.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
-                target_quant = target_quant.sub(0.5).mul(2)
-                metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
+                output_255 = (output.mul(0.5).add(0.5) * 255.0).int()
+                output_quant = (output_255.float() / 255.0).sub(0.5).mul(2)
+
+                target_255 = (target.mul(0.5).add(0.5) * 255.0).int()
+                target_quant = (target_255.float() / 255.0).sub(0.5).mul(2)
+
+                metrics_dict["PSNR"] += PSNR_quant(output, target)
 
                 # LPIPS
                 metrics_dict["LPIPS_01"] += lpips_criterion(
@@ -183,33 +187,17 @@ def main(_run):
 
                 for e in range(args.batch_size):
                     # Compute SSIM
-                    target_numpy = (
-                        target_quant[e]
-                        .mul(0.5)
-                        .add(0.5)
-                        .permute(1, 2, 0)
-                        .cpu()
-                        .detach()
-                        .numpy()
-                    )
+                    target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
 
-                    output_numpy = (
-                        output_quant[e]
-                        .mul(0.5)
-                        .add(0.5)
-                        .permute(1, 2, 0)
-                        .cpu()
-                        .detach()
-                        .numpy()
-                    )
+                    output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
                     metrics_dict["SSIM"] += ssim(
-                        target_numpy, output_numpy, multichannel=True, data_range=1.0
+                        target_numpy, output_numpy, multichannel=True, data_range=255.0
                     )
 
                     # Dump to output folder
                     # Phase and amplitude are nested
                     name = filename[e]
-                    path_output = val_path / name
+                    path_output = train_path / name
 
                     cv2.imwrite(
                         str(path_output),
@@ -274,14 +262,15 @@ def main(_run):
                     np.save(path_output, output_channel_concat.cpu().numpy())
 
                 # PSNR
-                output_quant = (output.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
-                output_quant = output_quant.sub(0.5).mul(2)
-                target_quant = (target.mul(0.5).add(0.5) * 255.0).int().float() / 255.0
-                target_quant = target_quant.sub(0.5).mul(2)
-                metrics_dict["PSNR"] += PSNR(output_quant, target_quant)
+                output_255 = (output.mul(0.5).add(0.5) * 255.0).int()
+                output_quant = (output_255.float() / 255.0).sub(0.5).mul(2)
+
+                target_255 = (target.mul(0.5).add(0.5) * 255.0).int()
+                target_quant = (target_255.float() / 255.0).sub(0.5).mul(2)
+
+                metrics_dict["PSNR"] += PSNR_quant(output, target)
 
                 # LPIPS
-                # TODO: check if results agree with udc_paper
                 metrics_dict["LPIPS_01"] += lpips_criterion(
                     output_quant.mul(0.5).add(0.5), target_quant.mul(0.5).add(0.5)
                 ).item()
@@ -290,29 +279,16 @@ def main(_run):
                     output_quant, target_quant
                 ).item()
 
+                # if filename[0] in ["8.png", "15.png", "16.png"]:
+                #     breakpoint()
+
                 for e in range(args.batch_size):
                     # Compute SSIM
-                    target_numpy = (
-                        target_quant[e]
-                        .mul(0.5)
-                        .add(0.5)
-                        .permute(1, 2, 0)
-                        .cpu()
-                        .detach()
-                        .numpy()
-                    )
+                    target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
 
-                    output_numpy = (
-                        output_quant[e]
-                        .mul(0.5)
-                        .add(0.5)
-                        .permute(1, 2, 0)
-                        .cpu()
-                        .detach()
-                        .numpy()
-                    )
+                    output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
                     metrics_dict["SSIM"] += ssim(
-                        target_numpy, output_numpy, multichannel=True, data_range=1.0
+                        target_numpy, output_numpy, multichannel=True, data_range=255.0
                     )
 
                     # Dump to output folder

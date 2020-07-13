@@ -136,7 +136,7 @@ class OLEDDataset(Dataset):
             target = cv2.resize(target, (self.args.image_width, self.args.image_height))
 
             # Crop a patch
-            if self.args.use_crop:
+            if self.args.use_patches:
                 assert (self.args.crop_height < self.args.image_height) and (
                     self.args.crop_width < self.args.image_width
                 )
@@ -186,7 +186,7 @@ class OLEDDataset(Dataset):
             target = cv2.resize(target, (self.args.image_width, self.args.image_height))
 
             # Crop a patch
-            if self.args.use_crop:
+            if self.args.use_patches:
                 assert (self.args.crop_height < self.args.image_height) and (
                     self.args.crop_width < self.args.image_width
                 )
@@ -216,7 +216,7 @@ class OLEDDataset(Dataset):
             source = cv2.resize(source, (self.args.image_width, self.args.image_height))
 
             # Crop a patch
-            if self.args.use_crop:
+            if self.args.use_patches:
                 assert (self.args.crop_height < self.args.image_height) and (
                     self.args.crop_width < self.args.image_width
                 )
@@ -235,11 +235,11 @@ class OLEDDataset(Dataset):
                     random_y : random_y + self.args.crop_width,
                 ]
 
-        source = torch.tensor(source).float().permute(2, 0, 1)
+        source = torch.tensor(source.copy()).float().permute(2, 0, 1)
         source = (source - 0.5) * 2
 
         if self.mode in ["train", "val"]:
-            target = torch.tensor(target).float().permute(2, 0, 1)
+            target = torch.tensor(target.copy()).float().permute(2, 0, 1)
             target = (target - 0.5) * 2
 
             return (source, target, source_path.name)

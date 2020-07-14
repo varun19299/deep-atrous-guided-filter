@@ -350,11 +350,14 @@ class SmoothDilatedResidualAtrousBlock(nn.Module):
         if self.args.use_FFA:
             y = self.palayer(self.calayer(y))
 
+            if self.args.use_residual:
+                y = y + x
+
         elif self.args.use_ECA:
             y = self.palayer(self.ecalayer(y))
 
-        if self.args.use_residual:
-            y = y + x
+            if self.args.use_residual:
+                y = y + x
 
         return F.leaky_relu(y, 0.2)
 
@@ -406,11 +409,15 @@ class ResidualFFABlock(nn.Module):
 
         if self.args.use_FFA:
             y = self.palayer(self.calayer(y))
+
+            if self.args.use_residual:
+                y = y + x
+
         elif self.args.use_ECA:
             y = self.palayer(self.ecalayer(y))
 
-        if self.args.use_residual:
-            y = y + x
+            if self.args.use_residual:
+                y = y + x
 
         return F.leaky_relu(y, 0.2)
 

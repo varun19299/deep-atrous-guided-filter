@@ -461,7 +461,7 @@ class LRNet(nn.Module):
         self.args = args
 
         self.lr = GCANet_atrous_corrected(
-            in_c=3 * args.num_ensemble * args.pixelshuffle_ratio ** 2,
+            in_c=3 * args.pixelshuffle_ratio ** 2,
             out_c=3 * args.pixelshuffle_ratio ** 2,
             args=args,
         )

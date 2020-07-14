@@ -168,4 +168,4 @@ def main():
     from torchsummary import summary
 
     model = Unet().to("cuda")
-    summary(model, (3, 256, 256))
+    summary(model, (3, 256, 512))

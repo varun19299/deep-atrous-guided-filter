@@ -293,6 +293,45 @@ def FFA_toled():
 
     test_source_dir = image_dir / "Toled_test" / "LQ"
 
+def unet_poled():
+    batch_size = 10
+    num_epochs = 448
+    do_augment = True
+    num_threads = batch_size * 2
+
+    exp_name = "unet-poled"
+    model = "Unet"
+
+    use_patches = True  # Turn this off while using val.py
+    crop_height = 256
+    crop_width = 512
+
+def unet_toled():
+    batch_size = 10
+    num_epochs = 448
+    do_augment = True
+    num_threads = batch_size * 2
+
+    exp_name = "unet-toled"
+    model = "Unet"
+
+    use_patches = True  # Turn this off while using val.py
+    crop_height = 256
+    crop_width = 512
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_test" / "LQ"
+
 
 def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
     exp_name = "guided-filter-l1-tanh-pixelshuffle-gca-5x5-atrous-deeper"
@@ -1048,6 +1087,8 @@ named_configs = [
     dgf_toled_pixelshuffle,
     FFA_poled,
     FFA_toled,
+    unet_poled,
+    unet_toled,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual,

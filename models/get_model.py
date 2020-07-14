@@ -13,7 +13,7 @@ from models.guided_filtering_net import (
     LRNet,
 )
 from models.FFA import FFA
-
+from models.unet import Unet
 
 def model(args, source_device=None, target_device=None):
     if args.model == "guided-filter":
@@ -124,6 +124,17 @@ def model(args, source_device=None, target_device=None):
     elif args.model == "FFA":
         return (
             FFA(gps=3, blocks=8),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "Unet":
+        return (
+            Unet(),
             Discriminator(
                 args,
                 source_device=source_device,

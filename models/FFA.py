@@ -9,6 +9,7 @@ from utils.tupperware import tupperware
 
 ex = Experiment("FFA-Net")
 
+
 def default_conv(in_channels, out_channels, kernel_size, bias=True):
     return nn.Conv2d(
         in_channels, out_channels, kernel_size, padding=(kernel_size // 2), bias=bias
@@ -142,6 +143,7 @@ class FFA(nn.Module):
 
     def forward(self, x1):
         x = self.pre(x1)
+        x_org = x
         res1 = self.g1(x)
         res2 = self.g2(res1)
         res3 = self.g3(res2)
@@ -149,14 +151,15 @@ class FFA(nn.Module):
         w = w.view(-1, self.gps, self.dim)[:, :, :, None, None]
         out = w[:, 0, ::] * res1 + w[:, 1, ::] * res2 + w[:, 2, ::] * res3
         out = self.palayer(out)
-        x = self.post(out)
-        return x + x1
+        x = self.post(out + x_org)
+        return x
+
 
 @ex.automain
 def main():
     from torchsummary import summary
 
-    net = FFA(gps=3, blocks=8)
+    net = FFA(gps=3, blocks=4)
 
-    summary(net, (3, 256, 256))
+    summary(net, (3, 256, 512))
     # print(net)

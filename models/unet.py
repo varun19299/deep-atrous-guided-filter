@@ -4,6 +4,11 @@ from sacred import Experiment
 
 ex = Experiment("UNet")
 
+from config import initialise
+from utils.tupperware import tupperware
+
+ex = initialise(ex)
+
 
 def convrelu(
     in_channels, out_channels, kernel=3, padding=1, stride=1, normaliser=nn.BatchNorm2d
@@ -164,8 +169,10 @@ class Unet(nn.Module):
 
 
 @ex.automain
-def main():
+def main(_run):
     from torchsummary import summary
 
-    model = Unet().to("cuda")
+    args = tupperware(_run.config)
+    model = Unet().to(args.device)
+
     summary(model, (3, 256, 512))

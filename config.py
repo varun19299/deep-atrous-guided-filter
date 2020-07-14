@@ -81,16 +81,16 @@ def base_config():
     save_filename_latest_D = "D_latest.pth"
 
     # save a copy of weights every x epochs
-    save_copy_every_epochs = 128
+    save_copy_every_epochs = 64
 
     # For model ensembling
     save_num_snapshots = 8
 
     # the number of iterations (default: 10) to print at
-    log_interval = 20
+    log_interval = 25
 
     # run val or test only every x epochs
-    val_test_epoch_interval = 5
+    val_test_epoch_interval = 10
 
     # ----------------------------------------------------------------------------  #
     # Val / Test Configs
@@ -238,6 +238,47 @@ def dgf_toled_pixelshuffle():
 
     model = "guided-filter-pixelshuffle"
     pixelshuffle_ratio = 2
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_test" / "LQ"
+
+
+def FFA_poled():
+    batch_size = 2
+    num_epochs = 448
+    do_augment = True
+    num_threads = batch_size * 2
+
+    exp_name = "FFA-poled"
+    model = "FFA"
+
+    use_patches = True  # Turn this off while using val.py
+    crop_height = 256
+    crop_width = 512
+
+
+def FFA_toled():
+    batch_size = 2
+    num_epochs = 448
+    do_augment = True
+    num_threads = batch_size * 2
+
+    exp_name = "FFA-toled"
+    model = "FFA"
+
+    use_patches = True  # Turn this off while using val.py
+    crop_height = 256
+    crop_width = 512
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -1005,6 +1046,8 @@ named_configs = [
     dgf_poled_pixelshuffle,
     dgf_toled,
     dgf_toled_pixelshuffle,
+    FFA_poled,
+    FFA_toled,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim,
     guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual,

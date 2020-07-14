@@ -12,6 +12,7 @@ from models.guided_filtering_net import (
     DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2,
     LRNet,
 )
+from models.FFA import FFA
 
 
 def model(args, source_device=None, target_device=None):
@@ -112,6 +113,17 @@ def model(args, source_device=None, target_device=None):
     elif args.model == "lr-net":
         return (
             LRNet(args),
+            Discriminator(
+                args,
+                source_device=source_device,
+                target_device=target_device,
+                use_pool=not args.use_patch_gan,
+            ),
+        )
+
+    elif args.model == "FFA":
+        return (
+            FFA(gps=3, blocks=8),
             Discriminator(
                 args,
                 source_device=source_device,

@@ -16,7 +16,7 @@ ex = initialise(ex)
 
 from models.DGF_utils.weights_init import weights_init_identity_pixelshuffle
 from models.DGF_utils.adaptive_norm import norm_dict
-from models.FFA_utils import CALayer, PALayer, ECALayer
+from models.FFA import CALayer, PALayer, ECALayer
 
 
 class ShareSepConv(nn.Module):

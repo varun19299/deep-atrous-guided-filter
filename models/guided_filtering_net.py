@@ -482,15 +482,15 @@ def main(_run):
     from utils.model_serialization import load_state_dict
 
     args = tupperware(_run.config)
-    model = LRNet(args)
-    # model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrousStage2(args)
+
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args)
     # ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
     # model_state_dict = ckpt["state_dict"]
     # model_state_dict.pop("module.lr.gate.bias", None)
     # model_state_dict.pop("module.lr.gate.weight", None)
     # load_state_dict(model, model_state_dict)
 
-    summary(model, (12, 256, 512))
+    summary(model, (3, 1024, 2048))
 
     # ckpt = torch.load(
     #     args.ckpt_dir / args.exp_name / "model_latest.pth", map_location="cpu"

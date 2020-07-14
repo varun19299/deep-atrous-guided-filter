@@ -196,7 +196,7 @@ def main(_run):
 
                     # Dump to output folder
                     # Phase and amplitude are nested
-                    name = filename[e]
+                    name = filename[e].replace(".npy",".png")
                     path_output = train_path / name
 
                     cv2.imwrite(
@@ -293,7 +293,7 @@ def main(_run):
 
                     # Dump to output folder
                     # Phase and amplitude are nested
-                    name = filename[e]
+                    name = filename[e].replace(".npy",".png")
                     path_output = val_path / name
 
                     cv2.imwrite(
@@ -373,7 +373,7 @@ def main(_run):
                     )
 
                     # Dump to output folder
-                    name = filename[e]
+                    name = filename[e].replace(".npy",".png")
                     path_output = test_path / name
 
                     cv2.imwrite(

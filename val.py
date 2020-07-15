@@ -196,13 +196,10 @@ def main(_run):
 
                     # Dump to output folder
                     # Phase and amplitude are nested
-                    name = filename[e].replace(".npy",".png")
+                    name = filename[e].replace(".npy", ".png")
                     path_output = train_path / name
 
-                    cv2.imwrite(
-                        str(path_output),
-                        (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
-                    )
+                    cv2.imwrite(str(path_output), output_numpy.astype(np.int))
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
                 avg_train_metrics += metrics_dict
@@ -293,13 +290,10 @@ def main(_run):
 
                     # Dump to output folder
                     # Phase and amplitude are nested
-                    name = filename[e].replace(".npy",".png")
+                    name = filename[e].replace(".npy", ".png")
                     path_output = val_path / name
 
-                    cv2.imwrite(
-                        str(path_output),
-                        (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
-                    )
+                    cv2.imwrite(str(path_output), output_numpy.astype(np.int))
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
                 avg_val_metrics += metrics_dict
@@ -373,7 +367,7 @@ def main(_run):
                     )
 
                     # Dump to output folder
-                    name = filename[e].replace(".npy",".png")
+                    name = filename[e].replace(".npy", ".png")
                     path_output = test_path / name
 
                     cv2.imwrite(

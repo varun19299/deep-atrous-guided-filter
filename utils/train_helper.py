@@ -22,7 +22,7 @@ def reduce_loss_dict(loss_dict, world_size):
     loss_dict, after reduction.
     """
     if world_size < 2:
-        return loss_dict
+        return {k: v.item() for k, v in loss_dict.items()}
     with torch.no_grad():
         loss_names = []
         all_losses = []

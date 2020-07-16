@@ -1145,6 +1145,7 @@ def guided_filter_1x1_poled():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 1
     guided_map_channels = 16
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -1173,6 +1174,7 @@ def guided_filter_3x3_poled():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 3
     guided_map_channels = 16
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -1244,6 +1246,7 @@ def guided_filter_1x1_toled():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 1
     guided_map_channels = 16
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -1285,6 +1288,7 @@ def guided_filter_3x3_toled():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 3
     guided_map_channels = 16
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25

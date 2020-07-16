@@ -348,6 +348,8 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous():
     guided_map_kernel_size = 5
     guided_map_channels = 24
 
+    guided_map_is_atrous_residual = False
+
     num_threads = batch_size * 2
     log_interval = 25
     val_test_epoch_interval = 6
@@ -372,6 +374,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -409,6 +412,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_atrous_sim_actual():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = 8
     log_interval = 25
@@ -437,6 +441,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -462,6 +467,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_ms_ssim_perceptual():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -492,6 +498,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -531,6 +538,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_sim_actual():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -557,6 +565,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -582,6 +591,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -619,6 +629,7 @@ def guided_filter_l1_tanh_pixelshuffle_gca_5x5_improved_FFA_sim_actual():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 5
     guided_map_channels = 24
+    guided_map_is_atrous_residual = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -877,17 +888,23 @@ def final_poled_sim_actual_aug():
     use_source_npy = True
     image_dir = Path("data")
     train_source_dir = (
-        Path("outputs") / "final-poled-sim-actual" / "train_latest_epoch_447_self_ensemble"
+        Path("outputs")
+        / "final-poled-sim-actual"
+        / "train_latest_epoch_447_self_ensemble"
     )
     train_target_dir = image_dir / "Poled_train" / "HQ"
 
     val_source_dir = (
-        Path("outputs") / "final-poled-sim-actual" / "val_latest_epoch_447_self_ensemble"
+        Path("outputs")
+        / "final-poled-sim-actual"
+        / "val_latest_epoch_447_self_ensemble"
     )
     val_target_dir = image_dir / "Poled_val" / "HQ"
 
     test_source_dir = (
-        Path("outputs") / "final-poled-sim-actual" / "test_latest_epoch_447_self_ensemble"
+        Path("outputs")
+        / "final-poled-sim-actual"
+        / "test_latest_epoch_447_self_ensemble"
     )
 
     output_dir = Path("outputs") / exp_name
@@ -1043,17 +1060,23 @@ def final_toled_sim_actual_aug():
     use_source_npy = True
     image_dir = Path("data")
     train_source_dir = (
-        Path("outputs") / "final-toled-sim-actual" / "train_latest_epoch_447_self_ensemble"
+        Path("outputs")
+        / "final-toled-sim-actual"
+        / "train_latest_epoch_447_self_ensemble"
     )
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
     val_source_dir = (
-        Path("outputs") / "final-toled-sim-actual" / "val_latest_epoch_447_self_ensemble"
+        Path("outputs")
+        / "final-toled-sim-actual"
+        / "val_latest_epoch_447_self_ensemble"
     )
     val_target_dir = image_dir / "Toled_val" / "HQ"
 
     test_source_dir = (
-        Path("outputs") / "final-toled-sim-actual" / "test_latest_epoch_447_self_ensemble"
+        Path("outputs")
+        / "final-toled-sim-actual"
+        / "test_latest_epoch_447_self_ensemble"
     )
 
     output_dir = Path("outputs") / exp_name

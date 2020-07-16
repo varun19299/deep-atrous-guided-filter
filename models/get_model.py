@@ -123,7 +123,7 @@ def model(args, source_device=None, target_device=None):
 
     elif args.model == "FFA":
         return (
-            FFA(gps=3, blocks=8),
+            FFA(gps=3, blocks=18),
             Discriminator(
                 args,
                 source_device=source_device,

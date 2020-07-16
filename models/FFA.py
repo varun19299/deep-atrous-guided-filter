@@ -159,7 +159,7 @@ class FFA(nn.Module):
 def main():
     from torchsummary import summary
 
-    net = FFA(gps=3, blocks=4)
+    net = FFA(gps=3, blocks=18)
 
     summary(net, (3, 256, 512))
     # print(net)

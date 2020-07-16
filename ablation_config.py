@@ -102,6 +102,35 @@ def ours_poled_normal_conv():
     learning_rate = 3e-4
 
 
+def ours_poled_atrous_narrow():
+    exp_name = "ours-poled-atrous-narrow"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved-FFA"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    use_gated = False
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
 def ours_poled_no_smooth():
     exp_name = "ours-poled-512-no-smooth"
 
@@ -146,6 +175,48 @@ def ours_toled_normal_conv():
     guided_map_channels = 16
     use_atrous = False
     use_smooth_atrous = False
+
+    num_threads = batch_size * 2
+    log_interval = 25
+    val_test_epoch_interval = 6
+    save_copy_every_epochs = 64
+
+    image_height = 512
+    image_width = 1024
+
+    # ---------------------------------------------------------------------------- #
+    # Data
+    # ---------------------------------------------------------------------------- #
+
+    image_dir = Path("data")
+    train_source_dir = image_dir / "Toled_train" / "LQ"
+    train_target_dir = image_dir / "Toled_train" / "HQ"
+
+    val_source_dir = image_dir / "Toled_val" / "LQ"
+    val_target_dir = image_dir / "Toled_val" / "HQ"
+
+    test_source_dir = image_dir / "Toled_test" / "LQ"
+
+    # Cosine annealing
+    T_0 = 64
+    T_mult = 2
+
+    learning_rate = 3e-4
+
+
+def ours_toled_atrous_narrow():
+    exp_name = "ours-toled-atrous-narrow"
+
+    batch_size = 4
+    do_augment = True
+    num_epochs = 448
+
+    # Model args
+    model = "guided-filter-pixelshuffle-gca-improved-FFA"
+    pixelshuffle_ratio = 2
+    guided_map_kernel_size = 3
+    guided_map_channels = 16
+    use_gated = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -249,35 +320,6 @@ def ours_poled_no_residual_no_gated():
     learning_rate = 3e-4
 
 
-def ours_poled_no_gated_narrow():
-    exp_name = "ours-poled-no-gated-narrow"
-
-    batch_size = 4
-    do_augment = True
-    num_epochs = 448
-
-    # Model args
-    model = "guided-filter-pixelshuffle-gca-improved-FFA"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 3
-    guided_map_channels = 16
-    use_gated = False
-
-    num_threads = batch_size * 2
-    log_interval = 25
-    val_test_epoch_interval = 6
-    save_copy_every_epochs = 64
-
-    image_height = 512
-    image_width = 1024
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
-
-    learning_rate = 3e-4
-
-
 def ours_poled_no_gated():
     exp_name = "ours-poled-512-no-gated"
 
@@ -321,48 +363,6 @@ def ours_toled_no_residual_no_gated():
     guided_map_kernel_size = 3
     guided_map_channels = 16
     use_residual = False
-    use_gated = False
-
-    num_threads = batch_size * 2
-    log_interval = 25
-    val_test_epoch_interval = 6
-    save_copy_every_epochs = 64
-
-    image_height = 512
-    image_width = 1024
-
-    # ---------------------------------------------------------------------------- #
-    # Data
-    # ---------------------------------------------------------------------------- #
-
-    image_dir = Path("data")
-    train_source_dir = image_dir / "Toled_train" / "LQ"
-    train_target_dir = image_dir / "Toled_train" / "HQ"
-
-    val_source_dir = image_dir / "Toled_val" / "LQ"
-    val_target_dir = image_dir / "Toled_val" / "HQ"
-
-    test_source_dir = image_dir / "Toled_test" / "LQ"
-
-    # Cosine annealing
-    T_0 = 64
-    T_mult = 2
-
-    learning_rate = 3e-4
-
-
-def ours_toled_no_gated_narrow():
-    exp_name = "ours-toled-no-gated-narrow"
-
-    batch_size = 4
-    do_augment = True
-    num_epochs = 448
-
-    # Model args
-    model = "guided-filter-pixelshuffle-gca-improved-FFA"
-    pixelshuffle_ratio = 2
-    guided_map_kernel_size = 3
-    guided_map_channels = 16
     use_gated = False
 
     num_threads = batch_size * 2
@@ -1319,15 +1319,15 @@ ablative_configs = [
     ours_toled,
     # Smooth atrous ablative
     ours_poled_normal_conv,
+    ours_poled_atrous_narrow,
     ours_poled_no_smooth,
     ours_toled_normal_conv,
+    ours_toled_atrous_narrow,
     ours_toled_no_smooth,
     # Residual and Gated
     ours_poled_no_residual_no_gated,
-    ours_poled_no_gated_narrow,
     ours_poled_no_gated,
     ours_toled_no_residual_no_gated,
-    ours_toled_no_gated_narrow,
     ours_toled_no_gated,
     # normalisation
     ours_poled_no_norm,

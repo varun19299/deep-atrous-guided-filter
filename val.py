@@ -163,7 +163,11 @@ def main(_run):
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
                 if args.save_ensemble_channels:
-                    name = filename[0].replace(".png", ".npy")
+                    name = (
+                        filename[0]
+                        .replace(".png", ".npy")
+                        .replace("channel_concat_", "")
+                    )
                     path_output = train_path / f"channel_concat_{name}"
                     np.save(path_output, output_channel_concat.cpu().numpy())
 
@@ -196,7 +200,11 @@ def main(_run):
 
                     # Dump to output folder
                     # Phase and amplitude are nested
-                    name = filename[e].replace(".npy", ".png")
+                    name = (
+                        filename[e]
+                        .replace(".npy", ".png")
+                        .replace("channel_concat_", "")
+                    )
                     path_output = train_path / name
 
                     cv2.imwrite(str(path_output), output_numpy.astype(np.int))
@@ -290,7 +298,11 @@ def main(_run):
 
                     # Dump to output folder
                     # Phase and amplitude are nested
-                    name = filename[e].replace(".npy", ".png")
+                    name = (
+                        filename[e]
+                        .replace(".npy", ".png")
+                        .replace("channel_concat_", "")
+                    )
                     path_output = val_path / name
 
                     cv2.imwrite(str(path_output), output_numpy.astype(np.int))
@@ -367,7 +379,11 @@ def main(_run):
                     )
 
                     # Dump to output folder
-                    name = filename[e].replace(".npy", ".png")
+                    name = (
+                        filename[e]
+                        .replace(".npy", ".png")
+                        .replace("channel_concat_", "")
+                    )
                     path_output = test_path / name
 
                     cv2.imwrite(

@@ -293,6 +293,7 @@ def FFA_toled():
 
     test_source_dir = image_dir / "Toled_test" / "LQ"
 
+
 def unet_poled():
     batch_size = 10
     num_epochs = 448
@@ -305,6 +306,7 @@ def unet_poled():
     use_patches = True  # Turn this off while using val.py
     crop_height = 256
     crop_width = 512
+
 
 def unet_toled():
     batch_size = 10
@@ -843,7 +845,7 @@ def final_poled_sim_actual():
 
     batch_size = 1
     do_augment = True
-    num_epochs = 448
+    num_epochs = 960
 
     # Model args
     model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
@@ -874,21 +876,21 @@ def final_poled_sim_actual_aug():
     # Data
     use_source_npy = True
     image_dir = Path("data")
-    output_dir = Path("outputs")
     train_source_dir = (
-        output_dir / "final-poled-sim-actual" / "train_latest_epoch_447_self_ensemble"
+        Path("outputs") / "final-poled-sim-actual" / "train_latest_epoch_447_self_ensemble"
     )
     train_target_dir = image_dir / "Poled_train" / "HQ"
 
     val_source_dir = (
-        output_dir / "final-poled-sim-actual" / "val_latest_epoch_447_self_ensemble"
+        Path("outputs") / "final-poled-sim-actual" / "val_latest_epoch_447_self_ensemble"
     )
     val_target_dir = image_dir / "Poled_val" / "HQ"
 
     test_source_dir = (
-        output_dir / "final-poled-sim-actual" / "test_latest_epoch_447_self_ensemble"
+        Path("outputs") / "final-poled-sim-actual" / "test_latest_epoch_447_self_ensemble"
     )
 
+    output_dir = Path("outputs") / exp_name
     # Model args
     model = "aug-stage-2"
     pixelshuffle_ratio = 2
@@ -996,7 +998,7 @@ def final_toled_sim_actual():
 
     batch_size = 1
     do_augment = True
-    num_epochs = 448
+    num_epochs = 960
 
     # Model args
     model = "atrous-guided-filter-pixelshuffle-gca-atrous-corrected"
@@ -1040,20 +1042,21 @@ def final_toled_sim_actual_aug():
     # Data
     use_source_npy = True
     image_dir = Path("data")
-    output_dir = Path("outputs")
     train_source_dir = (
-        output_dir / "final-toled-sim-actual" / "train_latest_epoch_447_self_ensemble"
+        Path("outputs") / "final-toled-sim-actual" / "train_latest_epoch_447_self_ensemble"
     )
     train_target_dir = image_dir / "Toled_train" / "HQ"
 
     val_source_dir = (
-        output_dir / "final-toled-sim-actual" / "val_latest_epoch_447_self_ensemble"
+        Path("outputs") / "final-toled-sim-actual" / "val_latest_epoch_447_self_ensemble"
     )
     val_target_dir = image_dir / "Toled_val" / "HQ"
 
     test_source_dir = (
-        output_dir / "final-toled-sim-actual" / "test_latest_epoch_447_self_ensemble"
+        Path("outputs") / "final-toled-sim-actual" / "test_latest_epoch_447_self_ensemble"
     )
+
+    output_dir = Path("outputs") / exp_name
 
     # Model args
     model = "aug-stage-2"

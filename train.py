@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 # Train helpers
 from utils.train_helper import (
     get_optimisers,
+    reduce_loss_dict,
     load_models,
     save_weights,
     ExpLoss_with_dict,
@@ -155,22 +156,21 @@ def main(_run):
 
     start_epoch = global_step // len(data.train_loader.dataset)
 
-    if is_local_rank_0:
-        # Exponential averaging of loss
-        loss_dict = {
-            "g_loss": 0.0,
-            "d_loss": 0.0,
-            "adversarial_loss": 0.0,
-            "perception_loss": 0.0,
-            "image_loss": 0.0,
-            "ms_ssim_loss": 0.0,
-            "cobi_rgb_loss": 0.0,
-            "train_PSNR": 0.0,
-        }
+    # Exponential averaging of loss
+    loss_dict = {
+        "g_loss": 0.0,
+        "d_loss": 0.0,
+        "adversarial_loss": 0.0,
+        "perception_loss": 0.0,
+        "image_loss": 0.0,
+        "ms_ssim_loss": 0.0,
+        "cobi_rgb_loss": 0.0,
+        "train_PSNR": 0.0,
+    }
 
-        metric_dict = {"PSNR": 0.0, "g_loss": 0.0}
-        avg_metrics = AvgLoss_with_dict(loss_dict=metric_dict, args=args)
-        exp_loss = ExpLoss_with_dict(loss_dict=loss_dict, args=args)
+    metric_dict = {"PSNR": 0.0, "g_loss": 0.0}
+    avg_metrics = AvgLoss_with_dict(loss_dict=metric_dict, args=args)
+    exp_loss = ExpLoss_with_dict(loss_dict=loss_dict, args=args)
 
     try:
         for epoch in range(start_epoch, args.num_epochs):
@@ -193,8 +193,7 @@ def main(_run):
                 ) and (epoch == start_epoch):
                     break
 
-                if is_local_rank_0:
-                    loss_dict = defaultdict(float)
+                loss_dict = defaultdict(float)
 
                 source, target, filename = batch
                 source, target = (source.to(rank), target.to(rank))
@@ -216,11 +215,9 @@ def main(_run):
                     d_loss.total_loss.backward()
                     d_optimizer.step()
 
-                    if is_local_rank_0:
-                        loss_dict["d_loss"] += d_loss.total_loss.item()
+                    loss_dict["d_loss"] += d_loss.total_loss
                 else:
-                    if is_local_rank_0:
-                        loss_dict["d_loss"] += 0.0
+                    loss_dict["d_loss"] += torch.tensor(0.0).to(rank)
 
                 # ------------------------------- #
                 # Update Gen
@@ -248,21 +245,21 @@ def main(_run):
                 g_lr_scheduler.step(epoch + i / len(data.train_loader))
 
                 if args.lambda_adversarial:
-                    d_lr_scheduler.step(epoch +i / len(data.train_loader))
+                    d_lr_scheduler.step(epoch + i / len(data.train_loader))
 
-                if is_local_rank_0:
-                    # Train PSNR
-                    loss_dict["train_PSNR"] += PSNR(output, target)
+                # if is_local_rank_0:
+                # Train PSNR
+                loss_dict["train_PSNR"] += PSNR(output, target)
 
-                    # Accumulate all losses
-                    loss_dict["g_loss"] += g_loss.total_loss.item()
-                    loss_dict["adversarial_loss"] += g_loss.adversarial_loss.item()
-                    loss_dict["perception_loss"] += g_loss.perception_loss.item()
-                    loss_dict["image_loss"] += g_loss.image_loss.item()
-                    loss_dict["ms_ssim_loss"] += g_loss.ms_ssim_loss.item()
-                    loss_dict["cobi_rgb_loss"] += g_loss.cobi_rgb_loss.item()
+                # Accumulate all losses
+                loss_dict["g_loss"] += g_loss.total_loss
+                loss_dict["adversarial_loss"] += g_loss.adversarial_loss
+                loss_dict["perception_loss"] += g_loss.perception_loss
+                loss_dict["image_loss"] += g_loss.image_loss
+                loss_dict["ms_ssim_loss"] += g_loss.ms_ssim_loss
+                loss_dict["cobi_rgb_loss"] += g_loss.cobi_rgb_loss
 
-                    exp_loss += loss_dict
+                exp_loss += reduce_loss_dict(loss_dict, world_size=world_size)
 
                 global_step += args.batch_size * world_size
 
@@ -351,16 +348,14 @@ def main(_run):
                     D.eval()
 
                 if data.val_loader:
-
+                    avg_metrics.reset()
                     if is_local_rank_0:
                         val_pbar.reset()
-                        avg_metrics.reset()
 
                     filename_static = []
 
                     for i, batch in enumerate(data.val_loader):
-                        if is_local_rank_0:
-                            metrics_dict = defaultdict(float)
+                        metrics_dict = defaultdict(float)
 
                         source, target, filename = batch
                         source, target = (source.to(rank), target.to(rank))
@@ -380,12 +375,14 @@ def main(_run):
                         else:
                             g_loss(output=output, target=target)
 
-                        if is_local_rank_0:
-                            metrics_dict["g_loss"] += g_loss.total_loss.item()
+                        # if is_local_rank_0:
+                        metrics_dict["g_loss"] += g_loss.total_loss
 
-                            # PSNR
-                            metrics_dict["PSNR"] += PSNR(output, target)
-                            avg_metrics += metrics_dict
+                        # PSNR
+                        metrics_dict["PSNR"] += PSNR(output, target)
+                        avg_metrics += reduce_loss_dict(
+                            metrics_dict, world_size=world_size
+                        )
 
                         # Save image
                         if args.static_val_image in filename:

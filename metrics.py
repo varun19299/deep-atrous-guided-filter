@@ -24,7 +24,7 @@ def PSNR(source: "Tensor", target: "Tensor"):
     target = target.mul(0.5).add(0.5).clamp(0, 1)
     noise = ((source - target) ** 2).mean(dim=3).mean(dim=2).mean(dim=1)
     signal_max = 1.0
-    return (10 * torch.log10(signal_max ** 2 / noise)).mean().item()
+    return (10 * torch.log10(signal_max ** 2 / noise)).mean()
 
 
 def PSNR_quant(source: "Tensor", target: "Tensor"):

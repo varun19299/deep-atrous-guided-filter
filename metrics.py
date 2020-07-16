@@ -41,6 +41,6 @@ def PSNR_quant(source: "Tensor", target: "Tensor"):
     source = (source * 255.0).int()
     target = (target * 255.0).int()
 
-    noise = ((source - target) ** 2).float().mean(dim=3).mean(dim=2).mean(dim=1)
+    noise = ((source - target) ** 2).double().mean(dim=3).mean(dim=2).mean(dim=1)
     signal_max = 255.0
-    return (10 * torch.log10(signal_max ** 2 / noise)).mean().item()
+    return (10 * torch.log10(signal_max ** 2 / noise)).mean().float().item()

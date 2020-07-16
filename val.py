@@ -22,8 +22,9 @@ from utils.tupperware import tupperware
 from models import get_model
 from metrics import PSNR, PSNR_quant
 from config import initialise
-from skimage.metrics import structural_similarity as ssim
 
+# from skimage.metrics import structural_similarity as ssim
+from utils.myssim import compare_ssim as ssim
 
 # Typing
 from typing import TYPE_CHECKING
@@ -191,11 +192,39 @@ def main(_run):
 
                 for e in range(args.batch_size):
                     # Compute SSIM
-                    target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    # target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    #
+                    # output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    # metrics_dict["SSIM"] += ssim(
+                    #     target_numpy, output_numpy, multichannel=True, data_range=255.0
+                    # )
 
-                    output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    target_numpy = (
+                        target_quant[e]
+                        .mul(0.5)
+                        .add(0.5)
+                        .permute(1, 2, 0)
+                        .cpu()
+                        .detach()
+                        .numpy()
+                    )
+
+                    output_numpy = (
+                        output_quant[e]
+                        .mul(0.5)
+                        .add(0.5)
+                        .permute(1, 2, 0)
+                        .cpu()
+                        .detach()
+                        .numpy()
+                    )
+
                     metrics_dict["SSIM"] += ssim(
-                        target_numpy, output_numpy, multichannel=True, data_range=255.0
+                        target_numpy,
+                        output_numpy,
+                        gaussian_weights=True,
+                        use_sample_covariance=False,
+                        multichannel=True,
                     )
 
                     # Dump to output folder
@@ -289,11 +318,39 @@ def main(_run):
 
                 for e in range(args.batch_size):
                     # Compute SSIM
-                    target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    # target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    #
+                    # output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    # metrics_dict["SSIM"] += ssim(
+                    #     target_numpy, output_numpy, multichannel=True, data_range=255.0
+                    # )
 
-                    output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
+                    target_numpy = (
+                        target_quant[e]
+                            .mul(0.5)
+                            .add(0.5)
+                            .permute(1, 2, 0)
+                            .cpu()
+                            .detach()
+                            .numpy()
+                    )
+
+                    output_numpy = (
+                        output_quant[e]
+                            .mul(0.5)
+                            .add(0.5)
+                            .permute(1, 2, 0)
+                            .cpu()
+                            .detach()
+                            .numpy()
+                    )
+
                     metrics_dict["SSIM"] += ssim(
-                        target_numpy, output_numpy, multichannel=True, data_range=255.0
+                        target_numpy,
+                        output_numpy,
+                        gaussian_weights=True,
+                        use_sample_covariance=False,
+                        multichannel=True,
                     )
 
                     # Dump to output folder

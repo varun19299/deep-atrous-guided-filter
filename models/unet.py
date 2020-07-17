@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from sacred import Experiment
-
+from functools import partial
 ex = Experiment("UNet")
 
 from config import initialise
@@ -16,8 +16,12 @@ def convrelu(
     return nn.Sequential(
         nn.Conv2d(in_channels, out_channels, kernel, padding=padding, stride=stride),
         normaliser(out_channels),
-        nn.ReLU(inplace=True),
+        nn.LeakyReLU(0.2, inplace=True),
     )
+
+
+def group_norm(num_channels: int, num_groups: int):
+    return nn.GroupNorm(num_channels=num_channels, num_groups=num_groups)
 
 
 class UpsampleBLock(nn.Module):
@@ -28,13 +32,13 @@ class UpsampleBLock(nn.Module):
         )
         self.upsample = nn.PixelShuffle(up_scale)
         self.normaliser = normaliser(in_channels)
-        self.relu = nn.ReLU()
+        self.lrelu = nn.LeakyReLU(0.2)
 
     def forward(self, x):
         x = self.conv(x)
         x = self.upsample(x)
         x = self.normaliser(x)
-        x = self.relu(x)
+        x = self.lrelu(x)
         return x
 
 
@@ -42,7 +46,7 @@ class Unet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        normaliser = nn.BatchNorm2d
+        normaliser = partial(group_norm, num_groups=8)
 
         # _0/_1 represents encoder branch
         self.layer0_0 = nn.Sequential(
@@ -91,11 +95,28 @@ class Unet(nn.Module):
             convrelu(128, 256, 3, 1, 1, normaliser=normaliser),
             convrelu(256, 256, 3, 1, 1, normaliser=normaliser),
         )
+        self.maxpool3 = nn.MaxPool2d(2, 2)
 
         self.layer4_0 = nn.Sequential(
-            convrelu(256, 512, 3, 1, 1, normaliser=normaliser),
-            convrelu(512, 512, 3, 1, 1, normaliser=normaliser),
-        )  # size=(N, 512, x.H/16, x.W/16)
+            convrelu(256, 256, 3, 1, 1, normaliser=normaliser),
+            convrelu(256, 256, 3, 1, 1, normaliser=normaliser),
+            nn.MaxPool2d(2, 2)
+        )  # size=(N, 256, x.H/32, x.W/32)
+
+        self.layer4_1 = nn.Sequential(
+            convrelu(256, 256, 3, 1, 1, normaliser=normaliser),
+            convrelu(256, 256, 3, 1, 1, normaliser=normaliser)
+        )
+
+        self.layer5_0 = nn.Sequential(
+            convrelu(256, 256, 3, 1, 1, normaliser=normaliser),
+            convrelu(256, 256, 3, 1, 1, normaliser=normaliser),
+        )
+
+        self.conv_up4 = nn.Sequential(
+            convrelu(256 + 256, 256, 3, 1, normaliser=normaliser),
+            convrelu(256, 256, 3, 1, normaliser=normaliser),
+        )
 
         self.conv_up3 = nn.Sequential(
             convrelu(256 + 256, 256, 3, 1, normaliser=normaliser),
@@ -117,8 +138,9 @@ class Unet(nn.Module):
             convrelu(32, 32, 3, 1, 1, normaliser=normaliser),
         )
 
+        self.upsample_32_16 = nn.ConvTranspose2d(256, 256, 2, stride=2)
         self.upsample_16_8 = nn.ConvTranspose2d(
-            512, 256, 2, stride=2
+            256, 256, 2, stride=2
         )  # upsample H/16 to H/8
         self.upsample_8_4 = nn.ConvTranspose2d(256, 128, 2, stride=2)
         self.upsample_4_2 = nn.ConvTranspose2d(128, 64, 2, stride=2)
@@ -133,7 +155,8 @@ class Unet(nn.Module):
         x = self.layer1_0(x)
         x = self.layer2_0(x)
         x = self.layer3_0(x)
-        layer4_0 = self.layer4_0(x)  # 512 channels
+        x = self.layer4_0(x)  # 256 channels
+        x = self.layer5_0(x)  # 256
 
         # second encoder branch
         layer0_1 = self.layer0_1(img)
@@ -147,7 +170,14 @@ class Unet(nn.Module):
         layer3_1 = self.maxpool2(layer2_1)
         layer3_1 = self.layer3_1(layer3_1)
 
-        x = self.upsample_16_8(layer4_0, output_size=layer3_1.size())
+        layer4_1 = self.maxpool3(layer3_1)
+        layer4_1 = self.layer4_1(layer4_1)
+
+        x = self.upsample_32_16(x)
+        x = torch.cat([x, layer4_1], dim=1)
+        x = self.conv_up4(x)  # size=(N, 256, x.H/16, x.W/16)
+
+        x = self.upsample_16_8(x, output_size=layer3_1.size())
         x = torch.cat([x, layer3_1], dim=1)
         x = self.conv_up3(x)  # size=(N, 256, x.H/8, x.W/8)
 

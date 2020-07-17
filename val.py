@@ -38,6 +38,9 @@ from utils.train_helper import set_device, load_models, AvgLoss_with_dict
 # Self ensemble
 from utils.self_ensemble import ensemble_ops, plot_single
 
+# Sample patches
+from utils.ops import chop_patches, unchop_patches
+
 # Experiment, add any observers by command line
 ex = Experiment("val")
 ex = initialise(ex)
@@ -140,7 +143,17 @@ def main(_run):
                 source, target, filename = batch
                 source, target = (source.to(device), target.to(device))
 
-                output = G(source)
+                if args.use_chop_val:
+                    n, c, h, w = source.shape
+                    source_chopped = chop_patches(
+                        source, args.crop_height, args.crop_width
+                    )
+                    output_chopped = G(source_chopped)
+                    output = unchop_patches(
+                        output_chopped, args.image_height, args.image_width, n=n
+                    )
+                else:
+                    output = G(source)
 
                 if args.self_ensemble:
                     output_ensembled = [output]
@@ -149,7 +162,20 @@ def main(_run):
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
 
-                        output_t = G(source_t)
+                        if args.use_chop_val:
+                            n, c, h, w = source_t.shape
+                            source_chopped_t = chop_patches(
+                                source_t, args.crop_height, args.crop_width
+                            )
+                            output_chopped_t = G(source_chopped_t)
+                            output_t = unchop_patches(
+                                output_chopped_t,
+                                args.image_height,
+                                args.image_width,
+                                n=n,
+                            )
+                        else:
+                            output_t = G(source_t)
 
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)
@@ -236,7 +262,10 @@ def main(_run):
                     )
                     path_output = train_path / name
 
-                    cv2.imwrite(str(path_output), output_numpy.astype(np.int))
+                    cv2.imwrite(
+                        str(path_output),
+                        (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
+                    )
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
                 avg_train_metrics += metrics_dict
@@ -267,7 +296,17 @@ def main(_run):
                 source, target, filename = batch
                 source, target = (source.to(device), target.to(device))
 
-                output = G(source)
+                if args.use_chop_val:
+                    n, c, h, w = source.shape
+                    source_chopped = chop_patches(
+                        source, args.crop_height, args.crop_width
+                    )
+                    output_chopped = G(source_chopped)
+                    output = unchop_patches(
+                        output_chopped, args.image_height, args.image_width, n=n
+                    )
+                else:
+                    output = G(source)
 
                 if args.self_ensemble:
                     output_ensembled = [output]
@@ -276,7 +315,20 @@ def main(_run):
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
 
-                        output_t = G(source_t)
+                        if args.use_chop_val:
+                            n, c, h, w = source_t.shape
+                            source_chopped_t = chop_patches(
+                                source_t, args.crop_height, args.crop_width
+                            )
+                            output_chopped_t = G(source_chopped_t)
+                            output_t = unchop_patches(
+                                output_chopped_t,
+                                args.image_height,
+                                args.image_width,
+                                n=n,
+                            )
+                        else:
+                            output_t = G(source_t)
 
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)
@@ -327,22 +379,22 @@ def main(_run):
 
                     target_numpy = (
                         target_quant[e]
-                            .mul(0.5)
-                            .add(0.5)
-                            .permute(1, 2, 0)
-                            .cpu()
-                            .detach()
-                            .numpy()
+                        .mul(0.5)
+                        .add(0.5)
+                        .permute(1, 2, 0)
+                        .cpu()
+                        .detach()
+                        .numpy()
                     )
 
                     output_numpy = (
                         output_quant[e]
-                            .mul(0.5)
-                            .add(0.5)
-                            .permute(1, 2, 0)
-                            .cpu()
-                            .detach()
-                            .numpy()
+                        .mul(0.5)
+                        .add(0.5)
+                        .permute(1, 2, 0)
+                        .cpu()
+                        .detach()
+                        .numpy()
                     )
 
                     metrics_dict["SSIM"] += ssim(
@@ -362,7 +414,10 @@ def main(_run):
                     )
                     path_output = val_path / name
 
-                    cv2.imwrite(str(path_output), output_numpy.astype(np.int))
+                    cv2.imwrite(
+                        str(path_output),
+                        (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
+                    )
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
                 avg_val_metrics += metrics_dict
@@ -396,7 +451,17 @@ def main(_run):
                 source, filename = batch
                 source = source.to(device)
 
-                output = G(source)
+                if args.use_chop_val:
+                    n, c, h, w = source.shape
+                    source_chopped = chop_patches(
+                        source, args.crop_height, args.crop_width
+                    )
+                    output_chopped = G(source_chopped)
+                    output = unchop_patches(
+                        output_chopped, args.image_height, args.image_width, n=n
+                    )
+                else:
+                    output = G(source)
 
                 if args.self_ensemble:
                     output_ensembled = [output]
@@ -405,7 +470,20 @@ def main(_run):
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
 
-                        output_t = G(source_t)
+                        if args.use_chop_val:
+                            n, c, h, w = source_t.shape
+                            source_chopped_t = chop_patches(
+                                source_t, args.crop_height, args.crop_width
+                            )
+                            output_chopped_t = G(source_chopped_t)
+                            output_t = unchop_patches(
+                                output_chopped_t,
+                                args.image_height,
+                                args.image_width,
+                                n=n,
+                            )
+                        else:
+                            output_t = G(source_t)
 
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)

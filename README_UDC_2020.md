@@ -8,6 +8,30 @@ Our submission to the ECCV 2020 [Under Display Camera Challenge (UDC)](https://r
 * pytorch 1.5+
 * Use `pip install -r utils/requirements.txt` for the remaining
 
+## Downloading Data and Checkpoints
+
+* Download data from here.
+* Download ckpts from here.
+* Download outputs from here.
+
+For data, download `Poled_{train,val,test}`, `Toled_{train,val,test}` folders. Place all of these under a folder `data`. Alternatively, you may download the entire directory and unzip it.
+
+The ckpt and output folders contain all our experiments, but you only need to download the configurations given below. 
+
+## Configurations in Submission
+
+POLED:
+* `final_poled`
+* `final_poled_sim_actual`
+* `final_poled_sim_actual_aug`
+
+TOLED:
+* `final_toled`
+* `final_toled_sim_actual`
+* `final_toled_sim_actual_aug`
+
+For experiment names (which correspond to the ckpt and output folder names), replace "_" by "-" in the config name.
+
 ## Directory Setup
 
 Create the following symbolic links (assume `path_to_root_folder/` is `~/udc_net`):
@@ -16,6 +40,37 @@ Create the following symbolic links (assume `path_to_root_folder/` is `~/udc_net
 * Runs folder: `ln -s /runs_dir/ ~/udc_net`
 * Ckpts folder: `ln -s /ckpt_dir/ ~/udc_net`
 * Outputs folder: `ln -s /output_dir/ ~/udc_net`
+
+## Reproduce Results
+
+### From checkpoints
+
+`python val.py with xyz_config {system=""} {save_mat=True} {self_ensemble=True}`
+
+`xyz` could be `final_poled`, `final_poled_sim_actual` etc.
+
+Useful Flags:
+
+* `save_mat`: Dumps mat file in `outputs/exp_name/test_latest/`. Used for submitting to CodaLab.
+* `self_ensemble`: Use self-ensembling. Ops may be found in `utils/self_ensembling.py`.
+
+See config.py for exhaustive set of arguments (under `base_config`).
+
+
+### From Scratch
+
+Ensure checkpoint under `ckpts/exp_name` is removed.
+
+`python train.py with xyz_config {system=""}`
+
+`xyz` could be `final_poled`, `final_poled_sim_actual` etc.
+
+For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
+
+```bash
+export NUM_GPUS=4 # 4 GPUs
+python -m torch.distributed.launch --nproc_per_node=$NUM_GPUS --use_env=True train.py with xyz_config distdataparallel=True {other flags}
+```
 
 ### Organisation 
 
@@ -82,29 +137,8 @@ runs
 ```
 
 
-## Configs
+## Other Configs
 
 See `config.py` for exhaustive set of config options. 
 
 Create a new function to overwrite and add it to `named_configs`. 
-
-## Train Script
-
-Run as:
-`python train.py with xyz_config {system=""} {other flags}`
-
-For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
-
-`python -m torch.distributed.launch --nproc_per_node=3 --use_env=True train.py with xyz_config distdataparallel=True {other flags}`
-
-## Val Script
-
-Run as:
-`python val.py with xyz_config {other flags}`
-
-Useful Flags:
-
-* `save_mat`: Dumps mat file in `outputs/args.exp_name/test_latest/`. Used for submitting to CodeLabs.
-* `self_ensemble`: Use self-ensembling. Ops may be found in `utils/self_ensembling.py`.
-
-See config.py for exhaustive set of arguments (under `base_config`).

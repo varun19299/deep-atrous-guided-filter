@@ -48,6 +48,7 @@ def base_config():
 
     # crop patches
     use_patches = False
+    use_chop_val = False
     crop_height = None
     crop_width = None
 
@@ -262,13 +263,14 @@ def FFA_poled():
     exp_name = "FFA-deeper-poled"
     model = "FFA"
 
-    use_patches = True  # Turn this off while using val.py
+    use_patches = True  # Turn this off while using val.py,
+    # use_chop_val = True  # Turn this ON while using val.py,
     crop_height = 256
     crop_width = 512
 
 
 def FFA_toled():
-    batch_size = 2
+    batch_size = 1
     num_epochs = 960
     do_augment = True
     num_threads = batch_size * 2
@@ -277,6 +279,7 @@ def FFA_toled():
     model = "FFA"
 
     use_patches = True  # Turn this off while using val.py
+    # use_chop_val = True  # Turn this ON while using val.py
     crop_height = 256
     crop_width = 512
 

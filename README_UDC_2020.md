@@ -10,7 +10,9 @@ Our submission to the ECCV 2020 [Under Display Camera Challenge (UDC)](https://r
 
 ## Downloading Data and Checkpoints
 
-* Download data from here.
+We shall consider this folder (`udc_net`) as the root folder.
+
+* Download data from here, place under `data`.
 * Download ckpts from here.
 * Download outputs from here.
 

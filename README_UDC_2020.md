@@ -12,11 +12,11 @@ Our submission to the ECCV 2020 [Under Display Camera Challenge (UDC)](https://r
 
 We shall consider this folder (`udc_net`) as the root folder.
 
-* Download data from here, place under `data`.
-* Download ckpts from here.
-* Download outputs from here.
+* Download data from [here](https://drive.google.com/drive/folders/1-2NDQXTZvPaoHIjVRobgENlW1qocbRZX?usp=sharing), place under `data`.
+* Download ckpts from [here](https://drive.google.com/drive/folders/1eX8Rhj5_M0vi8HYRX8zKKp_h5PIh2Vec?usp=sharing),  place under `ckpts`.
+* Download outputs from [here](https://drive.google.com/drive/folders/1fCr2dxiymYnb-COqPIGkjZprY0yj7Rew?usp=sharing),  place under `outputs`.
 
-For data, download `Poled_{train,val,test}`, `Toled_{train,val,test}` folders. Place all of these under a folder `data`. Alternatively, you may download the entire directory and unzip it.
+For data, download `Poled_{train,val,test}`, `Toled_{train,val,test}` folders. You can also use symlinks.
 
 The ckpt and output folders contain all our experiments, but you only need to download the configurations given below. 
 
@@ -33,15 +33,6 @@ TOLED:
 * `final_toled_sim_actual_aug`
 
 For experiment names (which correspond to the ckpt and output folder names), replace "_" by "-" in the config name.
-
-## Directory Setup
-
-Create the following symbolic links (assume `path_to_root_folder/` is `~/udc_net`):
-
-* Data folder: `ln -s /data_dir/ ~/udc_net`
-* Runs folder: `ln -s /runs_dir/ ~/udc_net`
-* Ckpts folder: `ln -s /ckpt_dir/ ~/udc_net`
-* Outputs folder: `ln -s /output_dir/ ~/udc_net`
 
 ## Reproduce Results
 
@@ -138,9 +129,17 @@ runs
 |   |-- events.out.tfevents.1592719979.jarvis.37079.0
 ```
 
-
 ## Other Configs
 
 See `config.py` for exhaustive set of config options. 
 
 Create a new function to overwrite and add it to `named_configs`. 
+
+## Using Symlinks
+
+You can alternatively create the following symbolic links (assume `path_to_root_folder/` is `udc_net`):
+
+* Data folder: `ln -s /data_dir/ ~/udc_net`
+* Runs folder: `ln -s /runs_dir/ ~/udc_net`
+* Ckpts folder: `ln -s /ckpt_dir/ ~/udc_net`
+* Outputs folder: `ln -s /output_dir/ ~/udc_net`

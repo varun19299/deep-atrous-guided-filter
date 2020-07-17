@@ -6,7 +6,6 @@ from sacred import Experiment
 from tqdm import tqdm
 from collections import defaultdict
 import numpy as np
-from loss import GLoss
 import logging
 import cv2
 
@@ -20,7 +19,7 @@ from dataloader import get_dataloaders
 from utils.dir_helper import dir_init
 from utils.tupperware import tupperware
 from models import get_model
-from metrics import PSNR, PSNR_quant
+from metrics import PSNR_quant
 from config import initialise
 
 # from skimage.metrics import structural_similarity as ssim
@@ -36,10 +35,10 @@ if TYPE_CHECKING:
 from utils.train_helper import set_device, load_models, AvgLoss_with_dict
 
 # Self ensemble
-from utils.self_ensemble import ensemble_ops, plot_single
+from utils.self_ensemble import ensemble_ops
 
 # Sample patches
-from utils.ops import chop_patches, unchop_patches
+from utils.ops import chop_patches, unchop_patches, roll_n
 
 # Experiment, add any observers by command line
 ex = Experiment("val")
@@ -50,6 +49,40 @@ from scipy.io.matlab.mio import savemat
 
 # To prevent "RuntimeError: received 0 items of ancdata"
 torch.multiprocessing.set_sharing_strategy("file_system")
+
+
+def forward_img(G, source, args):
+    if args.use_chop_val:
+        output_ll = []
+
+        for stride_height in range(0, args.crop_height, args.stride_height):
+            for stride_width in range(0, args.crop_width, args.stride_width):
+                # Roll
+                source_rolled = source.clone()
+                source_rolled = roll_n(source_rolled, axis=2, n=stride_height)
+                source_rolled = roll_n(source_rolled, axis=3, n=stride_width)
+
+                # Patch based val
+                n, c, h, w = source_rolled.shape
+                source_chopped = chop_patches(
+                    source_rolled, args.crop_height, args.crop_width
+                )
+                output_chopped = G(source_chopped)
+                output = unchop_patches(
+                    output_chopped, args.image_height, args.image_width, n=n
+                )
+
+                # Roll back
+                output = roll_n(output, axis=2, n=h - stride_height)
+                output = roll_n(output, axis=3, n=w - stride_width)
+
+                output_ll.append(output)
+
+        output = torch.cat(output_ll, dim=0).mean(dim=0, keepdim=True)
+    else:
+        output = G(source)
+
+    return output
 
 
 @ex.automain
@@ -143,17 +176,7 @@ def main(_run):
                 source, target, filename = batch
                 source, target = (source.to(device), target.to(device))
 
-                if args.use_chop_val:
-                    n, c, h, w = source.shape
-                    source_chopped = chop_patches(
-                        source, args.crop_height, args.crop_width
-                    )
-                    output_chopped = G(source_chopped)
-                    output = unchop_patches(
-                        output_chopped, args.image_height, args.image_width, n=n
-                    )
-                else:
-                    output = G(source)
+                output = forward_img(G, source, args)
 
                 if args.self_ensemble:
                     output_ensembled = [output]
@@ -162,20 +185,7 @@ def main(_run):
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
 
-                        if args.use_chop_val:
-                            n, c, h, w = source_t.shape
-                            source_chopped_t = chop_patches(
-                                source_t, args.crop_height, args.crop_width
-                            )
-                            output_chopped_t = G(source_chopped_t)
-                            output_t = unchop_patches(
-                                output_chopped_t,
-                                args.image_height,
-                                args.image_width,
-                                n=n,
-                            )
-                        else:
-                            output_t = G(source_t)
+                        output_t = forward_img(G, source_t, args)
 
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)
@@ -218,13 +228,6 @@ def main(_run):
 
                 for e in range(args.batch_size):
                     # Compute SSIM
-                    # target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
-                    #
-                    # output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
-                    # metrics_dict["SSIM"] += ssim(
-                    #     target_numpy, output_numpy, multichannel=True, data_range=255.0
-                    # )
-
                     target_numpy = (
                         target_quant[e]
                         .mul(0.5)
@@ -254,7 +257,6 @@ def main(_run):
                     )
 
                     # Dump to output folder
-                    # Phase and amplitude are nested
                     name = (
                         filename[e]
                         .replace(".npy", ".png")
@@ -296,17 +298,7 @@ def main(_run):
                 source, target, filename = batch
                 source, target = (source.to(device), target.to(device))
 
-                if args.use_chop_val:
-                    n, c, h, w = source.shape
-                    source_chopped = chop_patches(
-                        source, args.crop_height, args.crop_width
-                    )
-                    output_chopped = G(source_chopped)
-                    output = unchop_patches(
-                        output_chopped, args.image_height, args.image_width, n=n
-                    )
-                else:
-                    output = G(source)
+                output = forward_img(G, source, args)
 
                 if args.self_ensemble:
                     output_ensembled = [output]
@@ -315,20 +307,7 @@ def main(_run):
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
 
-                        if args.use_chop_val:
-                            n, c, h, w = source_t.shape
-                            source_chopped_t = chop_patches(
-                                source_t, args.crop_height, args.crop_width
-                            )
-                            output_chopped_t = G(source_chopped_t)
-                            output_t = unchop_patches(
-                                output_chopped_t,
-                                args.image_height,
-                                args.image_width,
-                                n=n,
-                            )
-                        else:
-                            output_t = G(source_t)
+                        output_t = forward_img(G, source_t, args)
 
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)
@@ -370,13 +349,6 @@ def main(_run):
 
                 for e in range(args.batch_size):
                     # Compute SSIM
-                    # target_numpy = target_255[e].permute(1, 2, 0).cpu().detach().numpy()
-                    #
-                    # output_numpy = output_255[e].permute(1, 2, 0).cpu().detach().numpy()
-                    # metrics_dict["SSIM"] += ssim(
-                    #     target_numpy, output_numpy, multichannel=True, data_range=255.0
-                    # )
-
                     target_numpy = (
                         target_quant[e]
                         .mul(0.5)
@@ -406,7 +378,6 @@ def main(_run):
                     )
 
                     # Dump to output folder
-                    # Phase and amplitude are nested
                     name = (
                         filename[e]
                         .replace(".npy", ".png")
@@ -451,17 +422,7 @@ def main(_run):
                 source, filename = batch
                 source = source.to(device)
 
-                if args.use_chop_val:
-                    n, c, h, w = source.shape
-                    source_chopped = chop_patches(
-                        source, args.crop_height, args.crop_width
-                    )
-                    output_chopped = G(source_chopped)
-                    output = unchop_patches(
-                        output_chopped, args.image_height, args.image_width, n=n
-                    )
-                else:
-                    output = G(source)
+                output = forward_img(G, source, args)
 
                 if args.self_ensemble:
                     output_ensembled = [output]
@@ -470,20 +431,7 @@ def main(_run):
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
 
-                        if args.use_chop_val:
-                            n, c, h, w = source_t.shape
-                            source_chopped_t = chop_patches(
-                                source_t, args.crop_height, args.crop_width
-                            )
-                            output_chopped_t = G(source_chopped_t)
-                            output_t = unchop_patches(
-                                output_chopped_t,
-                                args.image_height,
-                                args.image_width,
-                                n=n,
-                            )
-                        else:
-                            output_t = G(source_t)
+                        output_t = forward_img(G, source_t, args)
 
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)

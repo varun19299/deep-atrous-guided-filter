@@ -34,6 +34,8 @@ TOLED:
 
 For experiment names (which correspond to the ckpt and output folder names), replace "_" by "-" in the config name.
 
+While using the `aug` configs you must download corresponding `sim_actual` output folder (val and test folders atleast).
+
 ## Reproduce Results
 
 ### From checkpoints
@@ -54,7 +56,7 @@ See config.py for exhaustive set of arguments (under `base_config`).
 
 Ensure checkpoint under `ckpts/exp_name` is removed.
 
-`python train.py with xyz_config {system=""}`
+`python train.py with xyz_config`
 
 `xyz` could be `final_poled`, `final_poled_sim_actual` etc.
 

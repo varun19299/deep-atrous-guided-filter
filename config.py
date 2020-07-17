@@ -51,6 +51,8 @@ def base_config():
     use_chop_val = False
     crop_height = None
     crop_width = None
+    stride_height = crop_height
+    stride_width = crop_width
 
     # ---------------------------------------------------------------------------- #
     # Train Configs
@@ -264,9 +266,12 @@ def FFA_poled():
     model = "FFA"
 
     use_patches = True  # Turn this off while using val.py,
-    # use_chop_val = True  # Turn this ON while using val.py,
     crop_height = 256
     crop_width = 512
+
+    use_chop_val = True  # Turn this ON while using val.py,
+    stride_height = 128
+    stride_width = 128
 
 
 def FFA_toled():

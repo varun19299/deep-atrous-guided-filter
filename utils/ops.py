@@ -77,7 +77,6 @@ def chop_patches(
     patches : torch.Tensor
 
     """
-    n, c, h, w = img.shape
     patches = (
         img.unfold(2, patch_size_h, patch_size_h)
         .unfold(3, patch_size_w, patch_size_w)
@@ -113,3 +112,16 @@ def unchop_patches(
         (patch_size_h, patch_size_w),
     )
     return img.reshape(n, c, img_h, img_w)
+
+def roll_n(X, axis, n):
+    f_idx = tuple(
+        slice(None, None, None) if i != axis else slice(0, n, None)
+        for i in range(X.dim())
+    )
+    b_idx = tuple(
+        slice(None, None, None) if i != axis else slice(n, None, None)
+        for i in range(X.dim())
+    )
+    front = X[f_idx]
+    back = X[b_idx]
+    return torch.cat([back, front], axis)

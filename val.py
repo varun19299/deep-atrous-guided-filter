@@ -292,6 +292,12 @@ def main(_run):
                 range(len(data.val_loader) * args.batch_size), dynamic_ncols=True
             )
 
+            if args.save_mat:
+                output_mat = np.zeros(
+                    (len(data.test_loader), args.image_height, args.image_width, 3),
+                    dtype=np.uint8,
+                )
+
             for i, batch in enumerate(data.val_loader):
                 metrics_dict = defaultdict(float)
 
@@ -350,7 +356,7 @@ def main(_run):
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        target_quant[e]
+                        target[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -360,7 +366,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        output_quant[e]
+                        output[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -390,6 +396,12 @@ def main(_run):
                         (output_numpy[:, :, ::-1] * 255.0).astype(np.int),
                     )
 
+                    if args.save_mat:
+                        # Save to mat file
+                        output_numpy_int8 = (output_numpy * 255.0).astype(np.uint8)
+                        output_index = int(name.replace(".png", "")) - 1
+                        output_mat[output_index] = output_numpy_int8
+
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
                 avg_val_metrics += metrics_dict
 
@@ -397,6 +409,23 @@ def main(_run):
                 pbar.set_description(
                     f"Val Epoch : {start_epoch} Step: {global_step}| PSNR: {avg_val_metrics.loss_dict['PSNR']:.3f} | SSIM: {avg_val_metrics.loss_dict['SSIM']:.3f} | LPIPS 01: {avg_val_metrics.loss_dict['LPIPS_01']:.3f} | LPIPS 11: {avg_val_metrics.loss_dict['LPIPS_11']:.3f}"
                 )
+
+            if args.save_mat:
+                # mat file
+                savemat(val_path / "results.mat", {"results": output_mat})
+
+                # submission indormation
+                runtime = 0.0  # seconds / megapixel
+                cpu_or_gpu = 0  # 0: GPU, 1: CPU
+                method = 1  # 0: traditional methods, 1: deep learning method
+                other = "(optional) any additional description or information"
+
+                # prepare and save readme file
+                with open(test_path / "readme.txt", "w") as readme_file:
+                    readme_file.write(f"Runtime (seconds / megapixel): {runtime}\n")
+                    readme_file.write(f"CPU[1] / GPU[0]: {cpu_or_gpu}\n")
+                    readme_file.write(f"Method: {method}\n")
+                    readme_file.write(f"Other description: {other}\n")
 
             with open(val_path / "metrics.txt", "w") as f:
                 L = [

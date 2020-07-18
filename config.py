@@ -258,11 +258,11 @@ def dgf_toled_pixelshuffle():
 
 def FFA_poled():
     batch_size = 1
-    num_epochs = 960
+    num_epochs = 1984 # 960
     do_augment = True
     num_threads = batch_size * 2
 
-    exp_name = "FFA-deeper-poled"
+    exp_name = "FFA-poled"
     model = "FFA"
 
     use_patches = True  # Turn this off while using val.py,
@@ -270,7 +270,7 @@ def FFA_poled():
     crop_width = 512
 
     use_chop_val = True  # Turn this ON while using val.py,
-    stride_height = 128
+    stride_height = 64
     stride_width = 128
 
 
@@ -280,13 +280,17 @@ def FFA_toled():
     do_augment = True
     num_threads = batch_size * 2
 
-    exp_name = "FFA-deeper-toled"
+    exp_name = "FFA-toled"
     model = "FFA"
 
     use_patches = True  # Turn this off while using val.py
     # use_chop_val = True  # Turn this ON while using val.py
     crop_height = 256
     crop_width = 512
+
+    use_chop_val = True  # Turn this ON while using val.py,
+    stride_height = 256
+    stride_width = 512
 
     # ---------------------------------------------------------------------------- #
     # Data

@@ -2,6 +2,7 @@
 Metrics file
 """
 import torch
+import numpy as np
 from typing import TYPE_CHECKING
 from sacred import Experiment
 
@@ -44,3 +45,14 @@ def PSNR_quant(source: "Tensor", target: "Tensor"):
     noise = ((source - target) ** 2).double().mean(dim=3).mean(dim=2).mean(dim=1)
     signal_max = 255.0
     return (10 * torch.log10(signal_max ** 2 / noise)).mean().float().item()
+
+
+def PSNR_numpy(source, target):
+    """
+    :param source: H x W x C
+    :param target: H x W x C
+    :return:
+    """
+    source_numpy_int8 = (source * 255.0).astype(np.uint8) / 255.0
+    target_numpy_int8 = (target * 255.0).astype(np.uint8) / 255.0
+    return 10 * np.log10(1 / ((source_numpy_int8 - target_numpy_int8) ** 2).mean())

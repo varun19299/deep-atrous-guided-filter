@@ -19,7 +19,7 @@ from dataloader import get_dataloaders
 from utils.dir_helper import dir_init
 from utils.tupperware import tupperware
 from models import get_model
-from metrics import PSNR_quant
+from metrics import PSNR_numpy
 from config import initialise
 
 # from skimage.metrics import structural_similarity as ssim
@@ -45,7 +45,7 @@ ex = Experiment("val")
 ex = initialise(ex)
 
 # Save mat
-from scipy.io.matlab.mio import savemat
+from scipy.io.matlab.mio import savemat, loadmat
 
 # To prevent "RuntimeError: received 0 items of ancdata"
 torch.multiprocessing.set_sharing_strategy("file_system")
@@ -85,29 +85,7 @@ def forward_img(G, source, args):
     return output
 
 
-@ex.automain
-def main(_run):
-    args = tupperware(_run.config)
-    args.lambda_perception = 0.0
-    args.finetune = False
-    args.batch_size = 1
-    args.do_augment = False
-
-    # Set device, init dirs
-    device, source_device = set_device(args)
-    dir_init(args)
-    # Get data
-    data = get_dataloaders(args)
-
-    # Model
-    G, _ = get_model.model(args)
-    G = G.to(device)
-
-    # LPIPS Criterion
-    lpips_criterion = PerceptualLoss(
-        model="net-lin", net="alex", use_gpu=True, gpu_ids=[device]
-    ).to(device)
-
+def evaluate_model(G, data, lpips_criterion, device, args):
     # Load Models
     (G, _), _, global_step, start_epoch, loss = load_models(
         G,
@@ -118,47 +96,39 @@ def main(_run):
         tag=args.inference_mode,
     )
 
-    # Compatibility with checkpoints without global_step
-    if not global_step:
-        global_step = start_epoch * len(data.train_loader) * args.batch_size
+    # Metric loggers
+    train_metrics_dict = {"PSNR": 0.0, "SSIM": 0.0, "LPIPS_01": 0.0, "LPIPS_11": 0.0}
+    avg_train_metrics = AvgLoss_with_dict(loss_dict=train_metrics_dict, args=args)
 
-    _metrics_dict = {"PSNR": 0.0, "SSIM": 0.0, "LPIPS_01": 0.0, "LPIPS_11": 0.0}
-
-    avg_train_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict.copy(), args=args)
-
-    avg_val_metrics = AvgLoss_with_dict(loss_dict=_metrics_dict, args=args)
+    val_metrics_dict = {
+        "PSNR": 0.0,
+        "SSIM": 0.0,
+        "LPIPS_01": 0.0,
+        "LPIPS_11": 0.0,
+        "Time": 0.0,
+    }
+    avg_val_metrics = AvgLoss_with_dict(loss_dict=val_metrics_dict, args=args)
 
     logging.info(f"Loaded experiment {args.exp_name} trained for {start_epoch} epochs.")
 
     # Train, val and test paths
+    train_path = args.output_dir / f"train_{args.inference_mode}_epoch_{start_epoch}"
+    val_path = args.output_dir / f"val_{args.inference_mode}_epoch_{start_epoch}"
+    test_path = args.output_dir / f"test_{args.inference_mode}_epoch_{start_epoch}"
+
     if args.self_ensemble:
-        train_path = (
-            args.output_dir
-            / f"train_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
-        )
-    else:
-        train_path = (
-            args.output_dir / f"train_{args.inference_mode}_epoch_{start_epoch}"
-        )
+        train_path = train_path.parent / f"{train_path.name}_self_ensemble"
+        val_path = val_path.parent / f"{val_path.name}_self_ensemble"
+        test_path = test_path.parent / f"{test_path.name}_self_ensemble"
+
     train_path.mkdir(exist_ok=True, parents=True)
-
-    if args.self_ensemble:
-        val_path = (
-            args.output_dir
-            / f"val_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
-        )
-    else:
-        val_path = args.output_dir / f"val_{args.inference_mode}_epoch_{start_epoch}"
     val_path.mkdir(exist_ok=True, parents=True)
-
-    if args.self_ensemble:
-        test_path = (
-            args.output_dir
-            / f"test_{args.inference_mode}_epoch_{start_epoch}_self_ensemble"
-        )
-    else:
-        test_path = args.output_dir / f"test_{args.inference_mode}_epoch_{start_epoch}"
     test_path.mkdir(exist_ok=True, parents=True)
+
+    # CUDA events timing
+    if args.device == "cuda:0":
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
 
     with torch.no_grad():
         G.eval()
@@ -184,12 +154,9 @@ def main(_run):
                     for k in ensemble_ops.keys():
                         # Forward transform
                         source_t = ensemble_ops[k][0](source)
-
                         output_t = forward_img(G, source_t, args)
-
                         # Inverse transform
                         output_t = ensemble_ops[k][1](output_t)
-
                         output_ensembled.append(output_t)
 
                     output_channel_concat = torch.cat(output_ensembled, dim=1).squeeze(
@@ -215,7 +182,7 @@ def main(_run):
                 target_255 = (target.mul(0.5).add(0.5) * 255.0).int()
                 target_quant = (target_255.float() / 255.0).sub(0.5).mul(2)
 
-                metrics_dict["PSNR"] += PSNR_quant(output, target)
+                # metrics_dict["PSNR"] += PSNR_quant(output, target)
 
                 # LPIPS
                 metrics_dict["LPIPS_01"] += lpips_criterion(
@@ -229,7 +196,7 @@ def main(_run):
                 for e in range(args.batch_size):
                     # Compute SSIM
                     target_numpy = (
-                        target_quant[e]
+                        target[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -239,7 +206,7 @@ def main(_run):
                     )
 
                     output_numpy = (
-                        output_quant[e]
+                        output[e]
                         .mul(0.5)
                         .add(0.5)
                         .permute(1, 2, 0)
@@ -248,6 +215,7 @@ def main(_run):
                         .numpy()
                     )
 
+                    metrics_dict["PSNR"] += PSNR_numpy(target_numpy, output_numpy)
                     metrics_dict["SSIM"] += ssim(
                         target_numpy,
                         output_numpy,
@@ -270,6 +238,8 @@ def main(_run):
                     )
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
+                metrics_dict["PSNR"] = metrics_dict["PSNR"] / args.batch_size
+
                 avg_train_metrics += metrics_dict
 
                 pbar.update(args.batch_size)
@@ -304,6 +274,9 @@ def main(_run):
                 source, target, filename = batch
                 source, target = (source.to(device), target.to(device))
 
+                if args.device == "cuda:0":
+                    start.record()
+
                 output = forward_img(G, source, args)
 
                 if args.self_ensemble:
@@ -327,6 +300,14 @@ def main(_run):
 
                     output = torch.mean(output_ensembled, dim=0, keepdim=True)
 
+                # Inference time
+                if args.device == "cuda:0":
+                    end.record()
+                    torch.cuda.synchronize()
+                    metrics_dict["Time"] = start.elapsed_time(end)
+                else:
+                    metrics_dict["Time"] = 0.0
+
                 if args.save_ensemble_channels:
                     name = filename[0].replace(".png", ".npy")
                     path_output = val_path / f"channel_concat_{name}"
@@ -339,7 +320,7 @@ def main(_run):
                 target_255 = (target.mul(0.5).add(0.5) * 255.0).int()
                 target_quant = (target_255.float() / 255.0).sub(0.5).mul(2)
 
-                metrics_dict["PSNR"] += PSNR_quant(output, target)
+                # metrics_dict["PSNR"] += PSNR_quant(output, target)
 
                 # LPIPS
                 metrics_dict["LPIPS_01"] += lpips_criterion(
@@ -375,6 +356,7 @@ def main(_run):
                         .numpy()
                     )
 
+                    metrics_dict["PSNR"] += PSNR_numpy(target_numpy, output_numpy)
                     metrics_dict["SSIM"] += ssim(
                         target_numpy,
                         output_numpy,
@@ -403,6 +385,8 @@ def main(_run):
                         output_mat[output_index] = output_numpy_int8
 
                 metrics_dict["SSIM"] = metrics_dict["SSIM"] / args.batch_size
+                metrics_dict["PSNR"] = metrics_dict["PSNR"] / args.batch_size
+
                 avg_val_metrics += metrics_dict
 
                 pbar.update(args.batch_size)
@@ -528,3 +512,111 @@ def main(_run):
                     readme_file.write(f"CPU[1] / GPU[0]: {cpu_or_gpu}\n")
                     readme_file.write(f"Method: {method}\n")
                     readme_file.write(f"Other description: {other}\n")
+
+
+@ex.automain
+def main(_run):
+    args = tupperware(_run.config)
+    args.lambda_perception = 0.0
+    args.finetune = False
+    args.batch_size = 1
+    args.do_augment = False
+
+    # Set device, init dirs
+    device, source_device = set_device(args)
+    dir_init(args)
+    # Get data
+    data = get_dataloaders(args)
+
+    # Model
+    G, _ = get_model.model(args)
+    G = G.to(device)
+
+    # LPIPS Criterion
+    lpips_criterion = PerceptualLoss(
+        model="net-lin", net="alex", use_gpu=True, gpu_ids=[device]
+    ).to(device)
+
+    if not args.model_ensemble:
+        evaluate_model(
+            G=G, data=data, lpips_criterion=lpips_criterion, device=device, args=args
+        )
+    else:
+        # save mat = True
+        args.save_mat = True
+
+        epoch_list = list(
+            range(args.num_epochs - args.save_num_snapshots, args.num_epochs)
+        )
+        epoch_list = [892, 893, 894, 895, 956, 957, 958, 959]
+
+        # ensemble mats
+        ensembled_val_mat = []
+        ensembled_test_mat = []
+
+        # ensemble paths
+        ensemble_val_path = (
+            args.output_dir / f"val_model_ensemble_{epoch_list}"
+        )
+        ensemble_test_path = (
+            args.output_dir / f"test_model_ensemble_{epoch_list}"
+        )
+
+        if args.self_ensemble:
+            ensemble_val_path = (
+                ensemble_val_path.parent / f"{ensemble_val_path.name}_self_ensemble"
+            )
+            ensemble_test_path = (
+                ensemble_test_path.parent / f"{ensemble_test_path.name}_self_ensemble"
+            )
+
+        ensemble_val_path.mkdir(exist_ok=True, parents=True)
+        ensemble_test_path.mkdir(exist_ok=True, parents=True)
+
+        for epoch in epoch_list:
+            args.inference_mode = epoch
+
+            # Average all val and test .mat files
+            # Train, val and test paths
+            val_mat_path = args.output_dir / f"val_{args.inference_mode}_epoch_{epoch}"
+            test_mat_path = (
+                args.output_dir / f"test_{args.inference_mode}_epoch_{epoch}"
+            )
+
+            if args.self_ensemble:
+                val_mat_path = (
+                    val_mat_path.parent / f"{val_mat_path.name}_self_ensemble"
+                )
+                test_mat_path = (
+                    test_mat_path.parent / f"{test_mat_path.name}_self_ensemble"
+                )
+
+            val_mat_path = val_mat_path / "results.mat"
+            test_mat_path = test_mat_path / "results.mat"
+
+            if (not val_mat_path.exists()) or (not test_mat_path.exists()):
+                # Evaluate model
+                evaluate_model(
+                    G=G,
+                    data=data,
+                    lpips_criterion=lpips_criterion,
+                    device=device,
+                    args=args,
+                )
+            else:
+                print(f"Model at epoch {epoch + 1} evaluated. Skipping.")
+
+            # Open mat files and append
+            val_mat = loadmat(val_mat_path)["results"]
+            test_mat = loadmat(test_mat_path)["results"]
+
+            ensembled_val_mat.append(val_mat)
+            ensembled_test_mat.append(test_mat)
+
+        # Now average them
+        ensembled_val_mat = np.array(ensembled_val_mat).mean(axis=0).astype(np.uint8)
+        ensembled_test_mat = np.array(ensembled_test_mat).mean(axis=0).astype(np.uint8)
+
+        # Save mat files
+        savemat(ensemble_val_path / "results.mat", {"results": ensembled_val_mat})
+        savemat(ensemble_test_path / "results.mat", {"results": ensembled_test_mat})

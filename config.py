@@ -88,6 +88,7 @@ def base_config():
 
     # For model ensembling
     save_num_snapshots = 8
+    model_ensemble = False
 
     # the number of iterations (default: 10) to print at
     log_interval = 25
@@ -258,7 +259,7 @@ def dgf_toled_pixelshuffle():
 
 def FFA_poled():
     batch_size = 1
-    num_epochs = 1984 # 960
+    num_epochs = 1984  # 960
     do_augment = True
     num_threads = batch_size * 2
 
@@ -270,8 +271,8 @@ def FFA_poled():
     crop_width = 512
 
     use_chop_val = True  # Turn this ON while using val.py,
-    stride_height = 64
-    stride_width = 128
+    # stride_height = 64
+    # stride_width = 128
 
 
 def FFA_toled():

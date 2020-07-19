@@ -149,6 +149,10 @@ def load_models(
         (args.ckpt_dir / args.exp_name / i).resolve()
         for i in [args.save_filename_G, args.save_filename_D]
     ]
+    epoch_paths = [
+        (args.ckpt_dir / args.exp_name / f"Epoch_{tag}_{i}").resolve()
+        for i in [args.save_filename_latest_G, args.save_filename_latest_D]
+    ]
 
     if tag == "latest":
         paths = latest_paths
@@ -158,6 +162,12 @@ def load_models(
 
     elif tag == "best":
         paths = best_paths
+        if not paths[0].exists():
+            paths = latest_paths
+            tag = "latest"
+
+    elif type(tag) == int:
+        paths = epoch_paths
         if not paths[0].exists():
             paths = latest_paths
             tag = "latest"
@@ -210,7 +220,7 @@ def load_models(
             loss = checkpoint["loss"]
 
         if is_local_rank_0:
-            logging.info(f"Previous best model has loss of {loss}")
+            logging.info(f"Model has loss of {loss}")
 
     return models, optimizers, global_step, start_epoch, loss
 

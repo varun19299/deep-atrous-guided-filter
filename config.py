@@ -319,6 +319,7 @@ def unet_poled():
     use_patches = True  # Turn this off while using val.py
     crop_height = 256
     crop_width = 512
+    use_chop_val = True
 
 
 def unet_toled():
@@ -333,6 +334,7 @@ def unet_toled():
     use_patches = True  # Turn this off while using val.py
     crop_height = 256
     crop_width = 512
+    use_chop_val = True
 
     # ---------------------------------------------------------------------------- #
     # Data

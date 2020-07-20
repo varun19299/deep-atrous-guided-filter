@@ -23,12 +23,12 @@ The ckpt and output folders contain all our experiments, but you only need to do
 ## Configurations in Submission
 
 POLED:
-* `final_poled`
-* `final_poled_sim_actual`
+* `final_poled_sim_actual` (with self ensembling)
+* `final_poled_sim_actual` (with self and model ensembling)
 * `final_poled_sim_actual_aug`
 
 TOLED:
-* `final_toled`
+* `final_toled_sim_actual`
 * `final_toled_sim_actual`
 * `final_toled_sim_actual_aug`
 
@@ -42,12 +42,13 @@ While using the `aug` configs you must download corresponding `sim_actual` outpu
 
 `python val.py with xyz_config {system=""} {save_mat=True} {self_ensemble=True}`
 
-`xyz` could be `final_poled`, `final_poled_sim_actual` etc.
+`xyz` could be `final_poled_sim_actual`, `final_poled_sim_actual_aug` etc.
 
 Useful Flags:
 
 * `save_mat`: Dumps mat file in `outputs/exp_name/test_latest/`. Used for submitting to CodaLab.
 * `self_ensemble`: Use self-ensembling. Ops may be found in `utils/self_ensembling.py`.
+* `model_ensemble`: Use model-ensembling. Averaged mat file will be found in `outputs/exp_name/val_model_ensemble.../results.mat`.
 
 See config.py for exhaustive set of arguments (under `base_config`).
 
@@ -66,6 +67,8 @@ For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
 export NUM_GPUS=4 # 4 GPUs
 python -m torch.distributed.launch --nproc_per_node=$NUM_GPUS --use_env=True train.py with xyz_config distdataparallel=True {other flags}
 ```
+
+For `_aug` configs, replace `train.py` with `train_aug.py` and ensure that you download corresponding `sim_actual` output folder (val and test folders atleast).
 
 ### Organisation 
 

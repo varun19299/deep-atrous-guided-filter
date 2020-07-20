@@ -114,7 +114,6 @@ def ours_poled_atrous_narrow():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 3
     guided_map_channels = 16
-    use_gated = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -216,7 +215,6 @@ def ours_toled_atrous_narrow():
     pixelshuffle_ratio = 2
     guided_map_kernel_size = 3
     guided_map_channels = 16
-    use_gated = False
 
     num_threads = batch_size * 2
     log_interval = 25
@@ -1125,6 +1123,10 @@ def lr_net_poled():
     use_patches = True  # Turn this off while using val.py
     crop_height = 256
     crop_width = 512
+
+    use_chop_val = True
+    # stride_height = 128
+    # stride_width = 256
 
     # Cosine annealing
     T_0 = 64

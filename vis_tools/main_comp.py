@@ -35,21 +35,25 @@ def transform_img(img, roi, name, inset_dir):
 @ex.automain
 def main(_run):
     # Which dataset
-    dataset = "poled"
+    dataset = "toled"
     set = "val"
 
     data_dir = Path("../data/")
     output_dir = Path("../outputs/")
-    out_name = "30.png"
+    out_name = "21.png"
 
     inset_dir = Path(f"../insets/{out_name.replace('.png','')}_{dataset}_{set}")
     inset_dir.mkdir(exist_ok=True, parents=True)
 
+    # Epoch Info
+    ffa_epoch = 959 if dataset == "toled" else 1983
+    unet_epoch = 1799 if dataset == "toled" else 3599
+
     meas_dir = data_dir / f"{dataset.capitalize()}_{set}" / "LQ"
     dgf_dir = output_dir / f"dgf-{dataset}" / f"{set}_latest_epoch_447"
     panet_dir = output_dir / f"panet-{dataset}" / f"{set}_latest_epoch_105"
-    unet_dir = output_dir / f"unet-{dataset}" / f"{set}_latest_epoch_1199"
-    ffa_dir = output_dir / f"FFA-{dataset}" / f"{set}_latest_epoch_959"
+    unet_dir = output_dir / f"unet-{dataset}" / f"{set}_latest_epoch_{unet_epoch}"
+    ffa_dir = output_dir / f"FFA-{dataset}" / f"{set}_latest_epoch_{ffa_epoch}"
     ours_dir = output_dir / f"final-{dataset}" / f"{set}_latest_epoch_959"
     ours_sim_dir = (
         output_dir / f"final-{dataset}-sim-actual" / f"{set}_latest_epoch_959"

@@ -159,7 +159,7 @@ class FFA(nn.Module):
 def main():
     from torchsummary import summary
 
-    net = FFA(gps=3, blocks=18)
+    net = FFA(gps=3, blocks=18).cuda()
 
-    summary(net, (3, 256, 512))
+    summary(net, (3, 256, 512), batch_size=1)
     # print(net)

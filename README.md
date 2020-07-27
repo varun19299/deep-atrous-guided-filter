@@ -95,7 +95,7 @@ Run as:
 
 For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
 
-`python -m torch.distributed.launch --nproc_per_node=3 --use_env=True train.py with xyz_config distdataparallel=True {other flags}`
+`python -m torch.distributed.launch --nproc_per_node=3 --use_env train.py with xyz_config distdataparallel=True {other flags}`
 
 ## Val Script
 

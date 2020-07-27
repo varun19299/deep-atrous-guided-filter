@@ -65,7 +65,7 @@ For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
 
 ```bash
 export NUM_GPUS=4 # 4 GPUs
-python -m torch.distributed.launch --nproc_per_node=$NUM_GPUS --use_env=True train.py with xyz_config distdataparallel=True {other flags}
+python -m torch.distributed.launch --nproc_per_node=$NUM_GPUS --use_env train.py with xyz_config distdataparallel=True {other flags}
 ```
 
 For `_aug` configs, replace `train.py` with `train_aug.py` and ensure that you download corresponding `sim_actual` output folder (val and test folders atleast).

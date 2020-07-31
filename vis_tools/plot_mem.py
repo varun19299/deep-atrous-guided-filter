@@ -21,7 +21,7 @@ x_disp = np.logspace(5, 10, num=6, base=2)
 y_disp_ours = f_ours(x_disp) / 1024
 y_disp_lr = f_lr(x_disp) / 1024
 
-x_disp = np.array(["32x64", "64x128", "128x256", "256x512", "512x1024", "1024x1048"])
+x_disp = np.array(["32x64", "64x128", "128x256", "256x512", "512x1024", "1024x2048"])
 
 df = pd.DataFrame({"x": x, "y_ours": y_int_ours, "y_lr": y_int_lr})
 
@@ -72,4 +72,4 @@ fig = g.draw()
 
 plt.show()
 
-g.save("mem_consump.png", dpi=1000)
+g.save("../paper_figs/mem_consump.png", dpi=1000)

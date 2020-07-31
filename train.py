@@ -16,6 +16,13 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 import torch.distributed as dist
 
+try:
+    from torch.cuda.amp import GradScaler, autocast
+    mixed_precision_support = True
+except ImportError:
+    print("Mixed Precision Not Supported")
+    mixed_precision_support = False
+
 # Ignore warnings
 import warnings
 
@@ -72,6 +79,12 @@ def main(_run):
     # Ignore warnings
     if not is_local_rank_0:
         warnings.filterwarnings("ignore")
+
+    # Determine if mixed precision is supported
+    if args.mixed_precision:
+        args.mixed_precision = mixed_precision_support
+        print(f"Mixed Precision Support {args.mixed_precision}")
+        scaler = GradScaler()
 
     # Mutli GPUS Setup
     if args.distdataparallel:
@@ -205,15 +218,27 @@ def main(_run):
                     D.zero_grad()
                     G.zero_grad()
 
-                    output = G(source).detach()
+                    if args.mixed_precision:
+                        with autocast():
+                            output = G(source).detach()
 
-                    real_logit = D(target)
-                    fake_logit = D(output)
+                            real_logit = D(target)
+                            fake_logit = D(output)
 
-                    d_loss(real_logit=real_logit, fake_logit=fake_logit)
+                            d_loss(real_logit=real_logit, fake_logit=fake_logit)
 
-                    d_loss.total_loss.backward()
-                    d_optimizer.step()
+                        scaler.scale(d_loss.total_loss).backward()
+                        scaler.step(d_optimizer)
+                    else:
+                        output = G(source).detach()
+
+                        real_logit = D(target)
+                        fake_logit = D(output)
+
+                        d_loss(real_logit=real_logit, fake_logit=fake_logit)
+
+                        d_loss.total_loss.backward()
+                        d_optimizer.step()
 
                     loss_dict["d_loss"] += d_loss.total_loss
                 else:
@@ -224,23 +249,45 @@ def main(_run):
                 # ------------------------------- #
                 G.zero_grad()
 
-                output = G(source)
+                if args.mixed_precision:
+                    with autocast():
+                        output = G(source)
 
-                if args.lambda_adversarial:
-                    real_logit = D(target)
-                    fake_logit = D(output)
+                        if args.lambda_adversarial:
+                            real_logit = D(target)
+                            fake_logit = D(output)
 
-                    g_loss(
-                        fake_logit=fake_logit,
-                        real_logit=real_logit,
-                        output=output,
-                        target=target,
-                    )
+                            g_loss(
+                                fake_logit=fake_logit,
+                                real_logit=real_logit,
+                                output=output,
+                                target=target,
+                            )
+                        else:
+                            g_loss(output=output, target=target)
+
+                    scaler.scale(g_loss.total_loss).backward()
+                    scaler.step(g_optimizer)
                 else:
-                    g_loss(output=output, target=target)
+                    output = G(source)
 
-                g_loss.total_loss.backward()
-                g_optimizer.step()
+                    if args.lambda_adversarial:
+                        real_logit = D(target)
+                        fake_logit = D(output)
+
+                        g_loss(
+                            fake_logit=fake_logit,
+                            real_logit=real_logit,
+                            output=output,
+                            target=target,
+                        )
+                    else:
+                        g_loss(output=output, target=target)
+
+                    g_loss.total_loss.backward()
+                    g_optimizer.step()
+
+
                 # Update lr schedulers
                 g_lr_scheduler.step(epoch + i / len(data.train_loader))
 
@@ -262,6 +309,9 @@ def main(_run):
                 exp_loss += reduce_loss_dict(loss_dict, world_size=world_size)
 
                 global_step += args.batch_size * world_size
+
+                if args.mixed_precision:
+                    scaler.update()
 
                 if is_local_rank_0:
                     train_pbar.update(args.batch_size)
@@ -360,20 +410,37 @@ def main(_run):
                         source, target, filename = batch
                         source, target = (source.to(rank), target.to(rank))
 
-                        output = G(source)
+                        if args.mixed_precision:
+                            with autocast():
+                                output = G(source)
 
-                        if args.lambda_adversarial:
-                            fake_logit = D(output)
-                            real_logit = D(target)
+                                if args.lambda_adversarial:
+                                    fake_logit = D(output)
+                                    real_logit = D(target)
 
-                            g_loss(
-                                fake_logit=fake_logit,
-                                real_logit=real_logit,
-                                output=output,
-                                target=target,
-                            )
+                                    g_loss(
+                                        fake_logit=fake_logit,
+                                        real_logit=real_logit,
+                                        output=output,
+                                        target=target,
+                                    )
+                                else:
+                                    g_loss(output=output, target=target)
                         else:
-                            g_loss(output=output, target=target)
+                            output = G(source)
+
+                            if args.lambda_adversarial:
+                                fake_logit = D(output)
+                                real_logit = D(target)
+
+                                g_loss(
+                                    fake_logit=fake_logit,
+                                    real_logit=real_logit,
+                                    output=output,
+                                    target=target,
+                                )
+                            else:
+                                g_loss(output=output, target=target)
 
                         # if is_local_rank_0:
                         metrics_dict["g_loss"] += g_loss.total_loss

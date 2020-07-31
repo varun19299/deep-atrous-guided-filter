@@ -184,6 +184,7 @@ def base_config():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     lpips_device = "cuda:0" if torch.cuda.is_available() else "cpu"
     distdataparallel = False
+    mixed_precision = False
 
     # Cloud TPU
     tpu_distributed = False

@@ -34,50 +34,59 @@ def transform_img(img, roi, name, inset_dir):
 
 @ex.automain
 def main(_run):
-    # Which dataset
-    dataset = "poled"
     set = "val"
 
     data_dir = Path("../data/")
     output_dir = Path("../outputs/")
-    out_name = "28.png"
+    out_name = "5.png"
 
-    inset_dir = Path(f"../insets/{out_name.replace('.png','')}_{dataset}_{set}")
+    inset_dir = Path(
+        f"../insets/supplementary/line_artefacts_{out_name.replace('.png','')}_{set}"
+    )
     inset_dir.mkdir(exist_ok=True, parents=True)
 
-    # Epoch Info
-    ffa_epoch = 959 if dataset == "toled" else 1983
-    unet_epoch = 1799 if dataset == "toled" else 3599
+    panet_poled_dir = output_dir / "panet-poled" / f"{set}_latest_epoch_105"
+    panet_toled_dir = output_dir / "panet-toled" / f"{set}_latest_epoch_105"
 
-    meas_dir = data_dir / f"{dataset.capitalize()}_{set}" / "LQ"
-    dgf_dir = output_dir / f"dgf-{dataset}" / f"{set}_latest_epoch_447"
-    panet_dir = output_dir / f"panet-{dataset}" / f"{set}_latest_epoch_105"
-    unet_dir = output_dir / f"unet-{dataset}" / f"{set}_latest_epoch_{unet_epoch}"
-    ffa_dir = output_dir / f"FFA-{dataset}" / f"{set}_latest_epoch_{ffa_epoch}"
-    ours_dir = output_dir / f"final-{dataset}" / f"{set}_latest_epoch_959"
-    ours_sim_dir = (
-        output_dir / f"final-{dataset}-sim-actual" / f"{set}_latest_epoch_959"
-    )
-    gt_dir = data_dir / f"{dataset.capitalize()}_{set}" / "HQ"
+    ffa_poled_dir = output_dir / "FFA-poled" / f"{set}_latest_epoch_1983"
+    ffa_toled_dir = output_dir / "FFA-toled" / f"{set}_latest_epoch_959"
+
+    unet_poled_dir = output_dir / "unet-poled" / f"{set}_latest_epoch_3599"
+    unet_toled_dir = output_dir / "unet-toled" / f"{set}_latest_epoch_1799"
+
+    ours_poled_dir = output_dir / "final-poled-sim-actual" / f"{set}_latest_epoch_959"
+    ours_toled_dir = output_dir / "final-toled-sim-actual" / f"{set}_latest_epoch_959"
+
+    gt_dir = data_dir / f"Poled_{set}" / "HQ"
 
     dir_ll = [
-        meas_dir,
-        dgf_dir,
-        panet_dir,
-        unet_dir,
-        ffa_dir,
-        ours_dir,
-        ours_sim_dir,
+        panet_poled_dir,
+        panet_toled_dir,
+        ffa_poled_dir,
+        ffa_toled_dir,
+        unet_poled_dir,
+        unet_toled_dir,
+        ours_poled_dir,
+        ours_toled_dir,
         gt_dir,
     ]
 
     img_h, img_w = 1024, 2048
     view_img_h, view_img_w = 192, 384
-    view_t_img_h, view_t_img_w = 256, 384
 
     # Method names
-    ours_name = "ours-sim-real"
-    name_ll = ["meas", "dgf", "panet", "unet", "FFA", "ours", "ours-sim-real", "gt"]
+    ours_name = "unet-poled"
+    name_ll = [
+        "panet-poled",
+        "panet-toled",
+        "ffa-poled",
+        "ffa-toled",
+        "unet-poled",
+        "unet-toled",
+        "ours-poled",
+        "ours-toled",
+        "gt",
+    ]
     path_ll = [folder / out_name for folder in dir_ll]
     position_ll = [
         (0, 0),
@@ -88,8 +97,8 @@ def main(_run):
         (480, 540),
         (960, 540),
         (1440, 540),
+        (0, 1080),
     ][::-1]
-
     img_ll = {}
     img_transformed_ll = {}
 
@@ -97,6 +106,7 @@ def main(_run):
         if not img_path.exists():
             continue
         img = cv2.imread(str(img_path))
+        img = cv2.resize(img, (img_w, img_h))
         img_ll[name] = img
 
         cv2.namedWindow(name)

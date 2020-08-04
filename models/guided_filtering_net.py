@@ -483,7 +483,7 @@ def main(_run):
 
     args = tupperware(_run.config)
 
-    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args)
+    model = DeepGuidedFilterGuidedMapConvGFPixelShuffleGCAAtrous(args).to(args.device)
     # ckpt = torch.load("/Users/Ankivarun/Downloads/model_latest.pth", map_location="cpu")
     # model_state_dict = ckpt["state_dict"]
     # model_state_dict.pop("module.lr.gate.bias", None)

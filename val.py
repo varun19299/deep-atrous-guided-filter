@@ -1,5 +1,5 @@
 """
-Val Script for Phase/Amp mask
+Val Script
 """
 # Libraries
 from sacred import Experiment

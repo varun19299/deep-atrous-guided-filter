@@ -1,5 +1,5 @@
 """
-Train Script for Phase Mask and Amplitude Mask
+Train Script
 """
 # Libraries
 from sacred import Experiment

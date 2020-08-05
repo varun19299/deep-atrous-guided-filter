@@ -1,4 +1,4 @@
-# README
+# Deep Atrous Guided Filter
 
 Our submission to the ECCV 2020 [Under Display Camera Challenge (UDC)](https://rlq-tod.github.io/challenge2.html).
 

@@ -15,7 +15,9 @@ if TYPE_CHECKING:
     from utils.typing_alias import *
 
 
-def reduce_loss_dict(loss_dict, world_size):
+def reduce_loss_dict(
+    loss_dict: "Dict[str,Tensor]", world_size: int
+) -> "Dict[str,Tensor]":
     """
     Reduce the loss dictionary from all processes so that process with rank
     0 has the averaged results. Returns a dict with the same fields as
@@ -23,23 +25,28 @@ def reduce_loss_dict(loss_dict, world_size):
     """
     if world_size < 2:
         return {k: v.item() for k, v in loss_dict.items()}
+
     with torch.no_grad():
         loss_names = []
         all_losses = []
+
         for k in sorted(loss_dict.keys()):
             loss_names.append(k)
             all_losses.append(loss_dict[k])
         all_losses = torch.stack(all_losses, dim=0)
+
         dist.reduce(all_losses, dst=0)
+
         if dist.get_rank() == 0:
             # only main process gets accumulated, so only divide by
             # world_size in this case
             all_losses /= world_size
         reduced_losses = {k: v.item() for k, v in zip(loss_names, all_losses)}
+
     return reduced_losses
 
 
-def pprint_args(args):
+def pprint_args(args: "tupperware"):
     """
     Pretty print args
     """
@@ -55,125 +62,41 @@ def pprint_args(args):
     return string
 
 
-def set_device(args: "tupperware"):
-    """
-    Configure accelerators
-    :return: torch device
-    """
-    # os.environ["CUDA_DEVICE_ORDER"] = args.cuda_device_order
-    # os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_visible_devices
+def get_optimisers(G: "nn.Module", args: "tupperware") -> "Union[optim, lr_scheduler]":
 
-    if args.device == "cpu" or not torch.cuda.is_available():
-        print("Warning: cuda is not available on this machine.")
-        device = "cpu"
-        source_device = "cpu"
+    g_optimizer = AdamW(
+        G.parameters(), lr=args.learning_rate, betas=(args.beta_1, args.beta_2)
+    )
 
-    else:
-        device = args.device
-        source_device = args.lpips_device
+    g_lr_scheduler = CosineAnnealingWarmRestarts(
+        optimizer=g_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-10
+    )
 
-    device = torch.device(device)
-    source_device = torch.device(source_device)
-
-    return device, source_device
-
-
-def get_optimisers(
-    G: "nn.Module", D: "nn.Module", args: "tupperware"
-) -> "Tuple[optim, optim, lr_scheduler, lr_scheduler]":
-
-    if G:
-        g_optimizer = AdamW(
-            G.parameters(), lr=args.learning_rate, betas=(args.beta_1, args.beta_2)
-        )
-    else:
-        g_optimizer = None
-
-    if D:
-        d_optimizer = AdamW(
-            D.parameters(), lr=args.learning_rate, betas=(args.beta_1, args.beta_2)
-        )
-    else:
-        d_optimizer = None
-
-    if args.lr_scheduler == "cosine":
-        if g_optimizer:
-            g_lr_scheduler = CosineAnnealingWarmRestarts(
-                optimizer=g_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-10
-            )
-        else:
-            g_lr_scheduler = None
-
-        if d_optimizer:
-            d_lr_scheduler = CosineAnnealingWarmRestarts(
-                optimizer=d_optimizer, T_0=args.T_0, T_mult=args.T_mult, eta_min=2e-10
-            )
-        else:
-            d_lr_scheduler = None
-
-    elif args.lr_scheduler == "step":
-        if g_optimizer:
-            g_lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer=g_optimizer, step_size=args.step_size, gamma=0.1
-            )
-        else:
-            g_lr_scheduler = None
-
-        if d_optimizer:
-            d_lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer=d_optimizer, step_size=args.step_size, gamma=0.1
-            )
-        else:
-            d_lr_scheduler = None
-
-    return ((g_optimizer, d_optimizer), (g_lr_scheduler, d_lr_scheduler))
+    return g_optimizer, g_lr_scheduler
 
 
 def load_models(
     G: "nn.Module" = None,
-    D: "nn.Module" = None,
     g_optimizer: "optim" = None,
-    d_optimizer: "optim" = None,
     args: "tupperware" = None,
     tag: str = "latest",
     is_local_rank_0: bool = True,
-) -> "Tuple[List[nn.module], List[optim], int, int, int]":
+) -> "Union[nn.Module, optim, int, int, int]":
 
-    names = ["Gen", "Disc"]
-
-    latest_paths = [
-        (args.ckpt_dir / args.exp_name / i).resolve()
-        for i in [args.save_filename_latest_G, args.save_filename_latest_D]
-    ]
-    best_paths = [
-        (args.ckpt_dir / args.exp_name / i).resolve()
-        for i in [args.save_filename_G, args.save_filename_D]
-    ]
-    epoch_paths = [
-        (args.ckpt_dir / args.exp_name / f"Epoch_{tag}_{i}").resolve()
-        for i in [args.save_filename_latest_G, args.save_filename_latest_D]
-    ]
+    latest_path = args.ckpt_dir / args.save_filename_latest_G
+    best_path = args.ckpt_dir / args.save_filename_G
 
     if tag == "latest":
-        paths = latest_paths
-        if not paths[0].exists():
-            paths = best_paths
+        path = latest_path
+        if not path.exists():
+            path = best_path
             tag = "best"
 
     elif tag == "best":
-        paths = best_paths
-        if not paths[0].exists():
-            paths = latest_paths
+        path = best_path
+        if not path.exists():
+            path = latest_path
             tag = "latest"
-
-    elif type(tag) == int:
-        paths = epoch_paths
-        if not paths[0].exists():
-            paths = latest_paths
-            tag = "latest"
-
-    models = [G, D]
-    optimizers = [g_optimizer, d_optimizer]
 
     # Defaults
     start_epoch = 0
@@ -181,57 +104,42 @@ def load_models(
     loss = 1e6
 
     if args.resume:
-        for name, path, model, optimizer in zip(names, paths, models, optimizers):
-            if path.is_file():
-                checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        if path.is_file():
+            checkpoint = torch.load(path, map_location=torch.device("cpu"))
 
-                if model:
+            if is_local_rank_0:
+                logging.info(f"Loading checkpoint from {path} with tag {tag}.")
+            load_state_dict(G, checkpoint["state_dict"])
+            # G.load_state_dict(checkpoint["state_dict"])
+
+            if not args.finetune:
+                if g_optimizer and "optimizer" in checkpoint:
+                    g_optimizer.load_state_dict(checkpoint["optimizer"])
+
+                if "epoch" in checkpoint:
+                    start_epoch = checkpoint["epoch"] - 1
+
+                if "global_step" in checkpoint:
+                    global_step = checkpoint["global_step"]
+
+                if "loss" in checkpoint:
+                    loss = checkpoint["loss"]
+
                     if is_local_rank_0:
-                        logging.info(
-                            f"Loading checkpoint for {name} from {path} with tag {tag}."
-                        )
-                    load_state_dict(model, checkpoint["state_dict"])
+                        logging.info(f"Model has loss of {loss}")
 
-                if not args.finetune:
-                    if optimizer and "optimizer" in checkpoint:
-                        optimizer.load_state_dict(checkpoint["optimizer"])
+        else:
+            if is_local_rank_0:
+                logging.info(f"No checkpoint found  at {path} with tag {tag}.")
 
-                    if name == "Gen":
-                        if "epoch" in checkpoint:
-                            start_epoch = checkpoint["epoch"] - 1
-
-                        if "global_step" in checkpoint:
-                            global_step = checkpoint["global_step"]
-
-                        if "loss" in checkpoint:
-                            loss = checkpoint["loss"]
-
-            else:
-                if model and is_local_rank_0:
-                    logging.info(
-                        f"No checkpoint found for {name} at {path} with tag {tag}."
-                    )
-
-    # Best model
-    path = args.ckpt_dir / args.exp_name / args.save_filename_G
-    if path.exists() and not args.finetune:
-        checkpoint = torch.load(path, map_location=torch.device("cpu"))
-        if "loss" in checkpoint:
-            loss = checkpoint["loss"]
-
-        if is_local_rank_0:
-            logging.info(f"Model has loss of {loss}")
-
-    return models, optimizers, global_step, start_epoch, loss
+    return G, g_optimizer, global_step, start_epoch, loss
 
 
 def save_weights(
     global_step: int,
     epoch: int,
     G: "nn.Module" = None,
-    D: "nn.Module" = None,
     g_optimizer: "optim" = None,
-    d_optimizer: "optim" = None,
     loss: "float" = None,
     is_min: bool = True,
     args: "tupperware" = None,
@@ -242,66 +150,31 @@ def save_weights(
         if is_local_rank_0:
             logging.info(f"Epoch {epoch + 1} saving weights")
 
-        if G:
-            # Gen
-            G_state = {
-                "global_step": global_step,
-                "epoch": epoch + 1,
-                "state_dict": G.state_dict(),
-                "optimizer": g_optimizer.state_dict(),
-                "loss": loss,
-            }
-            save_filename_G = (
-                args.save_filename_latest_G if tag == "latest" else args.save_filename_G
-            )
+        # Gen
+        G_state = {
+            "global_step": global_step,
+            "epoch": epoch + 1,
+            "state_dict": G.state_dict(),
+            "optimizer": g_optimizer.state_dict(),
+            "loss": loss,
+        }
+        save_filename_G = (
+            args.save_filename_latest_G if tag == "latest" else args.save_filename_G
+        )
 
-            path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
+        path_G = str(args.ckpt_dir / save_filename_G)
 
-            if args.tpu_distributed:
-                xm.save(G_state, path_G)
-            else:
-                torch.save(G_state, path_G)
+        torch.save(G_state, path_G)
 
-            # Specific saving
-            if tag == "latest":
-                for i in range(1, args.save_num_snapshots + 1):
-                    if (epoch + i) % args.save_copy_every_epochs == 0:
-                        save_filename_G = f"Epoch_{epoch}_{save_filename_G}"
+        # Specific saving
+        if tag == "latest":
+            for i in range(1, args.save_num_snapshots + 1):
+                if (epoch + i) % args.save_copy_every_epochs == 0:
+                    save_filename_G = f"Epoch_{epoch}_{save_filename_G}"
 
-                        path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
+                    path_G = str(args.ckpt_dir / args.exp_name / save_filename_G)
 
-                        if args.tpu_distributed:
-                            xm.save(G_state, path_G)
-                        else:
-                            torch.save(G_state, path_G)
-
-        if D:
-            # Disc
-            D_state = {
-                "global_step": global_step,
-                "epoch": epoch + 1,
-                "state_dict": D.state_dict(),
-                "optimizer": d_optimizer.state_dict(),
-            }
-            save_filename_D = (
-                args.save_filename_latest_D if tag == "latest" else args.save_filename_D
-            )
-
-            path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
-            torch.save(D_state, path_D)
-
-            # Specific saving
-            if tag == "latest":
-                for i in range(1, args.save_num_snapshots + 1):
-                    if (epoch + i) % args.save_copy_every_epochs == 0:
-                        save_filename_D = f"Epoch_{epoch}_{save_filename_D}"
-
-                        path_D = str(args.ckpt_dir / args.exp_name / save_filename_D)
-
-                        if args.tpu_distributed:
-                            xm.save(D_state, path_D)
-                        else:
-                            torch.save(D_state, path_D)
+                    torch.save(G_state, path_G)
 
     else:
         if is_local_rank_0:
@@ -314,7 +187,7 @@ class SmoothenValue(object):
     def __init__(self, beta: float = 0.9):
         self.beta, self.n, self.mov_avg = beta, 0, 0
 
-    def add_value(self, val: float) -> None:
+    def add_value(self, val: float):
         "Add `val` to calculate updated smoothed value."
         self.n += 1
         self.mov_avg = self.beta * self.mov_avg + (1 - self.beta) * val

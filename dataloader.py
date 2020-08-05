@@ -15,7 +15,6 @@ import torch.distributed as dist
 import cv2
 from config import initialise
 import random
-import numpy as np
 
 if TYPE_CHECKING:
     from utils.typing_alias import *
@@ -71,25 +70,11 @@ class OLEDDataset(Dataset):
             )
         self.is_local_rank_0 = is_local_rank_0
 
-    def _load_dataset(self, glob_str="*.png"):
-
-        if self.source_dir:
-            if self.args.use_source_npy:
-                source_paths = list(self.source_dir.glob("*.npy"))[: self.max_len]
-            else:
-                source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]
-        else:
-            source_paths = []
+    def _load_dataset(self, glob_str="*.png") -> "Union[List,List]":
+        source_paths = list(self.source_dir.glob(glob_str))[: self.max_len]
 
         if self.target_dir:
-            if self.args.use_source_npy:
-                target_paths = [
-                    self.target_dir
-                    / file.name.replace(".npy", ".png").replace("channel_concat_", "")
-                    for file in source_paths
-                ]
-            else:
-                target_paths = [self.target_dir / file.name for file in source_paths]
+            target_paths = [self.target_dir / file.name for file in source_paths]
         else:
             target_paths = []
 
@@ -101,64 +86,10 @@ class OLEDDataset(Dataset):
     def __getitem__(self, index):
         source_path = self.source_paths[index]
 
-        if self.args.use_source_npy:
-            source = np.load(source_path)
-            source = torch.tensor(source).float()
-            if self.mode == "train":
-                target_path = self.target_paths[index]
-                target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
-                target = cv2.resize(
-                    target, (self.args.image_width, self.args.image_height)
-                )
-
-            elif self.mode == "val":
-                target_path = self.target_paths[index]
-                target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
-                target = cv2.resize(
-                    target, (self.args.image_width, self.args.image_height)
-                )
-
-            if self.mode in ["train", "val"]:
-                target = torch.tensor(target).float().permute(2, 0, 1)
-                target = (target - 0.5) * 2
-
-                return source, target, source_path.name
-
-            else:
-                return source, source_path.name
-
         if self.mode == "train":
             target_path = self.target_paths[index]
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
             target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
-
-            source = cv2.resize(source, (self.args.image_width, self.args.image_height))
-            target = cv2.resize(target, (self.args.image_width, self.args.image_height))
-
-            # Crop a patch
-            if self.args.use_patches:
-                assert (self.args.crop_height < self.args.image_height) and (
-                    self.args.crop_width < self.args.image_width
-                )
-                # Random x
-                random_x = random.randint(
-                    0, self.args.image_height - self.args.crop_height - 1
-                )
-
-                # Random y
-                random_y = random.randint(
-                    0, self.args.image_width - self.args.crop_width - 1
-                )
-
-                source = source[
-                    random_x : random_x + self.args.crop_height,
-                    random_y : random_y + self.args.crop_width,
-                ]
-
-                target = target[
-                    random_x : random_x + self.args.crop_height,
-                    random_y : random_y + self.args.crop_width,
-                ]
 
             # Data augmentation
             if self.args.do_augment:
@@ -182,58 +113,8 @@ class OLEDDataset(Dataset):
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
             target = cv2.imread(str(target_path))[:, :, ::-1] / 255.0
 
-            source = cv2.resize(source, (self.args.image_width, self.args.image_height))
-            target = cv2.resize(target, (self.args.image_width, self.args.image_height))
-
-            # Crop a patch
-            if self.args.use_patches:
-                assert (self.args.crop_height < self.args.image_height) and (
-                    self.args.crop_width < self.args.image_width
-                )
-                # Random x
-                random_x = random.randint(
-                    0, self.args.image_height - self.args.crop_height - 1
-                )
-
-                # Random y
-                random_y = random.randint(
-                    0, self.args.image_width - self.args.crop_width - 1
-                )
-
-                source = source[
-                    random_x : random_x + self.args.crop_height,
-                    random_y : random_y + self.args.crop_width,
-                ]
-
-                target = target[
-                    random_x : random_x + self.args.crop_height,
-                    random_y : random_y + self.args.crop_width,
-                ]
-
         elif self.mode == "test":
             source = cv2.imread(str(source_path))[:, :, ::-1] / 255.0
-
-            source = cv2.resize(source, (self.args.image_width, self.args.image_height))
-
-            # Crop a patch
-            if self.args.use_patches:
-                assert (self.args.crop_height < self.args.image_height) and (
-                    self.args.crop_width < self.args.image_width
-                )
-                # Random x
-                random_x = random.randint(
-                    0, self.args.image_height - self.args.crop_height - 1
-                )
-
-                # Random y
-                random_y = random.randint(
-                    0, self.args.image_width - self.args.crop_width - 1
-                )
-
-                source = source[
-                    random_x : random_x + self.args.crop_height,
-                    random_y : random_y + self.args.crop_width,
-                ]
 
         source = torch.tensor(source.copy()).float().permute(2, 0, 1)
         source = (source - 0.5) * 2
@@ -268,113 +149,68 @@ def get_dataloaders(args, is_local_rank_0: bool = True):
     val_loader = None
     test_loader = None
 
-    if args.tpu_distributed:
-        import torch_xla.core.xla_model as xm
-
     if len(train_dataset):
         if args.distdataparallel:
-            if args.tpu_distributed:
-                train_sampler = torch.utils.data.distributed.DistributedSampler(
-                    train_dataset,
-                    num_replicas=xm.xrt_world_size(),
-                    rank=xm.get_ordinal(),
-                    shuffle=True,
-                )
-
-            else:
-                train_sampler = torch.utils.data.distributed.DistributedSampler(
-                    train_dataset, num_replicas=dist.get_world_size(), shuffle=True
-                )
-
-            train_loader = DataLoader(
-                train_dataset,
-                batch_size=args.batch_size,
-                shuffle=False,
-                num_workers=args.num_threads,
-                pin_memory=False,
-                drop_last=True,
-                sampler=train_sampler,
+            train_sampler = torch.utils.data.distributed.DistributedSampler(
+                train_dataset, num_replicas=dist.get_world_size(), shuffle=True
             )
+
+            shuffle = False
         else:
+            train_sampler = None
+            shuffle = True
 
-            train_loader = DataLoader(
-                train_dataset,
-                batch_size=args.batch_size,
-                shuffle=True,
-                num_workers=args.num_threads,
-                pin_memory=False,
-                drop_last=True,
-                sampler=None,
-            )
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=args.batch_size,
+            shuffle=shuffle,
+            num_workers=args.num_threads,
+            pin_memory=False,
+            drop_last=True,
+            sampler=train_sampler,
+        )
 
     if len(val_dataset):
         if args.distdataparallel:
-            if args.tpu_distributed:
-                val_sampler = torch.utils.data.distributed.DistributedSampler(
-                    val_dataset,
-                    num_replicas=xm.xrt_world_size(),
-                    rank=xm.get_ordinal(),
-                    shuffle=True,
-                )
-
-            else:
-                val_sampler = torch.utils.data.distributed.DistributedSampler(
-                    val_dataset, num_replicas=dist.get_world_size(), shuffle=True
-                )
-
-            val_loader = DataLoader(
-                val_dataset,
-                batch_size=args.batch_size,
-                shuffle=False,
-                num_workers=0,
-                pin_memory=False,
-                drop_last=True,
-                sampler=val_sampler,
+            val_sampler = torch.utils.data.distributed.DistributedSampler(
+                val_dataset, num_replicas=dist.get_world_size(), shuffle=True
             )
+
+            shuffle = False
         else:
+            val_sampler = None
+            shuffle = True
 
-            val_loader = DataLoader(
-                val_dataset,
-                batch_size=args.batch_size,
-                shuffle=True,
-                num_workers=0,
-                pin_memory=False,
-                drop_last=True,
-                sampler=None,
-            )
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=args.batch_size,
+            shuffle=shuffle,
+            num_workers=0,
+            pin_memory=False,
+            drop_last=True,
+            sampler=val_sampler,
+        )
 
     if len(test_dataset):
         if args.distdataparallel:
-            if args.tpu_distributed:
-                test_sampler = torch.utils.data.distributed.DistributedSampler(
-                    test_dataset,
-                    num_replicas=xm.xrt_world_size(),
-                    rank=xm.get_ordinal(),
-                    shuffle=True,
-                )
-            else:
-                test_sampler = torch.utils.data.distributed.DistributedSampler(
-                    test_dataset, num_replicas=dist.get_world_size(), shuffle=True
-                )
-            test_loader = DataLoader(
-                test_dataset,
-                batch_size=args.batch_size,
-                shuffle=False,
-                num_workers=0,
-                pin_memory=False,
-                drop_last=True,
-                sampler=test_sampler,
+            test_sampler = torch.utils.data.distributed.DistributedSampler(
+                test_dataset, num_replicas=dist.get_world_size(), shuffle=True
             )
+
+            shuffle = False
         else:
-            test_loader = DataLoader(
-                test_dataset,
-                batch_size=args.batch_size,
-                shuffle=True,
-                num_workers=0,
-                pin_memory=False,
-                drop_last=True,
-                sampler=None,
-            )
+            test_sampler = None
+            shuffle = True
+
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=args.batch_size,
+            shuffle=shuffle,
+            num_workers=0,
+            pin_memory=False,
+            drop_last=True,
+            sampler=test_sampler,
+        )
 
     return Data(
         train_loader=train_loader, val_loader=val_loader, test_loader=test_loader
@@ -391,5 +227,3 @@ def main(_run):
 
     for batch in tqdm(data.train_loader.dataset):
         pass
-    # for batch in data.train_loader:
-    #     pass

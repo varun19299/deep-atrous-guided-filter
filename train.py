@@ -1,5 +1,5 @@
 """
-Train Script for Phase Mask and Amplitude Mask
+Train Script
 """
 # Libraries
 from sacred import Experiment
@@ -87,26 +87,14 @@ def main(_run):
     data = get_dataloaders(args, is_local_rank_0=is_local_rank_0)
 
     # Model
-    G, D = get_model.model(args)
-
-    # Init the Low Res network
-    # G.init_lr("ckpts/lr_net_latest.pth")
-    G = G.to(rank)
-
-    # Don't load disc unless needed
-    if args.lambda_adversarial:
-        D = D.to(rank)
-    else:
-        D = None
+    G = get_model.model(args).to(rank)
 
     # Optimisers
-    (g_optimizer, d_optimizer), (g_lr_scheduler, d_lr_scheduler) = get_optimisers(
-        G, D, args
-    )
+    g_optimizer, g_lr_scheduler = get_optimisers(G, args)
 
     # Load Models
-    (G, D), (g_optimizer, d_optimizer), global_step, start_epoch, loss = load_models(
-        G, D, g_optimizer, d_optimizer, args, is_local_rank_0=is_local_rank_0
+    G, g_optimizer, global_step, start_epoch, loss = load_models(
+        G, g_optimizer, args, is_local_rank_0=is_local_rank_0
     )
 
     if args.distdataparallel:
@@ -114,17 +102,13 @@ def main(_run):
         G = torch.nn.parallel.DistributedDataParallel(
             G, device_ids=[rank], output_device=rank
         )
-        if args.lambda_adversarial:
-            D = torch.nn.parallel.DistributedDataParallel(
-                D, device_ids=[rank], output_device=rank
-            )
 
     # Log no of GPUs
     if is_local_rank_0:
         world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
         logging.info("Using {} GPUs".format(world_size))
 
-        writer = SummaryWriter(log_dir=str(args.run_dir / args.exp_name))
+        writer = SummaryWriter(log_dir=str(args.run_dir))
         writer.add_text("Args", pprint_args(args))
 
         # Pbars
@@ -147,9 +131,6 @@ def main(_run):
     # Initialise losses
     g_loss = GLoss(args).to(rank)
 
-    if args.lambda_adversarial:
-        d_loss = DLoss(args).to(rank)
-
     # Compatibility with checkpoints without global_step
     if not global_step:
         global_step = start_epoch * len(data.train_loader) * args.batch_size
@@ -158,17 +139,13 @@ def main(_run):
 
     # Exponential averaging of loss
     loss_dict = {
-        "g_loss": 0.0,
-        "d_loss": 0.0,
-        "adversarial_loss": 0.0,
-        "perception_loss": 0.0,
+        "total_loss": 0.0,
         "image_loss": 0.0,
-        "ms_ssim_loss": 0.0,
         "cobi_rgb_loss": 0.0,
         "train_PSNR": 0.0,
     }
 
-    metric_dict = {"PSNR": 0.0, "g_loss": 0.0}
+    metric_dict = {"PSNR": 0.0, "total_loss": 0.0}
     avg_metrics = AvgLoss_with_dict(loss_dict=metric_dict, args=args)
     exp_loss = ExpLoss_with_dict(loss_dict=loss_dict, args=args)
 
@@ -177,8 +154,6 @@ def main(_run):
             # Train mode
             G.train()
 
-            if args.lambda_adversarial:
-                D.train()
 
             if is_local_rank_0:
                 train_pbar.reset()
@@ -198,65 +173,27 @@ def main(_run):
                 source, target, filename = batch
                 source, target = (source.to(rank), target.to(rank))
 
-                if args.lambda_adversarial:
-                    # ------------------------------- #
-                    # Update Disc
-                    # ------------------------------- #
-                    D.zero_grad()
-                    G.zero_grad()
-
-                    output = G(source).detach()
-
-                    real_logit = D(target)
-                    fake_logit = D(output)
-
-                    d_loss(real_logit=real_logit, fake_logit=fake_logit)
-
-                    d_loss.total_loss.backward()
-                    d_optimizer.step()
-
-                    loss_dict["d_loss"] += d_loss.total_loss
-                else:
-                    loss_dict["d_loss"] += torch.tensor(0.0).to(rank)
-
                 # ------------------------------- #
                 # Update Gen
                 # ------------------------------- #
                 G.zero_grad()
-
                 output = G(source)
 
-                if args.lambda_adversarial:
-                    real_logit = D(target)
-                    fake_logit = D(output)
-
-                    g_loss(
-                        fake_logit=fake_logit,
-                        real_logit=real_logit,
-                        output=output,
-                        target=target,
-                    )
-                else:
-                    g_loss(output=output, target=target)
+                g_loss(output=output, target=target)
 
                 g_loss.total_loss.backward()
                 g_optimizer.step()
+
                 # Update lr schedulers
                 g_lr_scheduler.step(epoch + i / len(data.train_loader))
-
-                if args.lambda_adversarial:
-                    d_lr_scheduler.step(epoch + i / len(data.train_loader))
 
                 # if is_local_rank_0:
                 # Train PSNR
                 loss_dict["train_PSNR"] += PSNR(output, target)
 
                 # Accumulate all losses
-                loss_dict["g_loss"] += g_loss.total_loss
-                loss_dict["adversarial_loss"] += g_loss.adversarial_loss
-                loss_dict["perception_loss"] += g_loss.perception_loss
+                loss_dict["total_loss"] += g_loss.total_loss
                 loss_dict["image_loss"] += g_loss.image_loss
-                loss_dict["ms_ssim_loss"] += g_loss.ms_ssim_loss
                 loss_dict["cobi_rgb_loss"] += g_loss.cobi_rgb_loss
 
                 exp_loss += reduce_loss_dict(loss_dict, world_size=world_size)
@@ -265,19 +202,14 @@ def main(_run):
 
                 if is_local_rank_0:
                     train_pbar.update(args.batch_size)
-
                     train_pbar.set_description(
-                        f"Epoch: {epoch + 1} | Gen loss: {exp_loss.loss_dict['g_loss']:.3f} "
+                        f"Epoch: {epoch + 1} | Gen loss: {exp_loss.loss_dict['total_loss']:.3f} "
                     )
 
                 # Write lr rates and metrics
                 if is_local_rank_0 and i % (args.log_interval) == 0:
                     gen_lr = g_optimizer.param_groups[0]["lr"]
                     writer.add_scalar("lr/gen", gen_lr, global_step)
-
-                    if args.lambda_adversarial:
-                        disc_lr = d_optimizer.param_groups[0]["lr"]
-                        writer.add_scalar("lr/disc", disc_lr, global_step)
 
                     for metric in exp_loss.loss_dict:
                         writer.add_scalar(
@@ -326,9 +258,7 @@ def main(_run):
                     epoch=epoch,
                     global_step=global_step,
                     G=G,
-                    D=D,
                     g_optimizer=g_optimizer,
-                    d_optimizer=d_optimizer,
                     loss=loss,
                     tag="latest",
                     args=args,
@@ -344,9 +274,6 @@ def main(_run):
             with torch.no_grad():
                 G.eval()
 
-                if args.lambda_adversarial:
-                    D.eval()
-
                 if data.val_loader:
                     avg_metrics.reset()
                     if is_local_rank_0:
@@ -361,25 +288,13 @@ def main(_run):
                         source, target = (source.to(rank), target.to(rank))
 
                         output = G(source)
+                        g_loss(output=output, target=target)
 
-                        if args.lambda_adversarial:
-                            fake_logit = D(output)
-                            real_logit = D(target)
-
-                            g_loss(
-                                fake_logit=fake_logit,
-                                real_logit=real_logit,
-                                output=output,
-                                target=target,
-                            )
-                        else:
-                            g_loss(output=output, target=target)
-
-                        # if is_local_rank_0:
-                        metrics_dict["g_loss"] += g_loss.total_loss
-
+                        # Total loss
+                        metrics_dict["total_loss"] += g_loss.total_loss
                         # PSNR
                         metrics_dict["PSNR"] += PSNR(output, target)
+
                         avg_metrics += reduce_loss_dict(
                             metrics_dict, world_size=world_size
                         )
@@ -465,9 +380,9 @@ def main(_run):
                         )
 
                         # Save weights
-                        if avg_metrics.loss_dict["g_loss"] < loss:
+                        if avg_metrics.loss_dict["total_loss"] < loss:
                             is_min = True
-                            loss = avg_metrics.loss_dict["g_loss"]
+                            loss = avg_metrics.loss_dict["total_loss"]
                         else:
                             is_min = False
 
@@ -476,9 +391,7 @@ def main(_run):
                             epoch=epoch,
                             global_step=global_step,
                             G=G,
-                            D=D,
                             g_optimizer=g_optimizer,
-                            d_optimizer=d_optimizer,
                             loss=loss,
                             is_min=is_min,
                             args=args,
@@ -574,9 +487,7 @@ def main(_run):
                 epoch=epoch,
                 global_step=global_step,
                 G=G,
-                D=D,
                 g_optimizer=g_optimizer,
-                d_optimizer=d_optimizer,
                 loss=loss,
                 is_min=True,
                 args=args,

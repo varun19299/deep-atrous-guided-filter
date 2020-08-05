@@ -8,6 +8,7 @@ To ease # imports for typing.
 __all__ = [
     "TYPE_CHECKING",
     "Any",
+    "Array",
     "Dict",
     "DataLoader",
     "List",
@@ -28,3 +29,4 @@ from utils.tupperware import tupperware
 from torch.utils.tensorboard import SummaryWriter
 from torch import Tensor, nn, optim
 import torch.optim.lr_scheduler as lr_scheduler
+from numpy import ndarray as Array

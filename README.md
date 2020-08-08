@@ -16,7 +16,7 @@ If you want to experiment with Deep Atrous Guided Filter (DAGF), we recommend yo
 
 It requires no prior setup, and contains a demo for both POLED and TOLED measurements.
 
-If you're unfamiliar with Under Display Cameras, they are a new imaging system for smartphones, where the camera is mounted right under the display. This makes truly bezel-free displays possible, and opens up a bunch of other applications. You can read more here.
+If you're unfamiliar with Under Display Cameras, they are a new imaging system for smartphones, where the camera is mounted right under the display. This makes truly bezel-free displays possible, and opens up a bunch of other applications. You can read more [here](https://yzhouas.github.io/projects/UDC/udc.html).
 
 ## Get Started
 
@@ -31,10 +31,16 @@ You'll need to install the following:
 
 ## Data
 
+| Dataset         | Train Folder  | Val Folder  | Test Folder  |
+|-----------------|---------------|-------------|--------------|
+| POLED           | [POLED_train](https://drive.google.com/drive/folders/1LQ6BsrDkVyrIMRFZVCnVfK8NFZU0Q0OG?usp=sharing) | [POLED_val](https://drive.google.com/open?id=1C5TCLPb1GNiA4MtPOiScvWkRqYK21wC3&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) | [POLED_test](https://drive.google.com/open?id=1-sygEnW4iHOt-BXgV8sk7w0NIEfJi8gi&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) |
+| TOLED           | [TOLED_train](https://drive.google.com/open?id=16kwzG4W0R2Rbo-hrF3WvcHS6zYZqrtX8&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) | [TOLED_val](https://drive.google.com/open?id=1LZgub138kVcAfWq2KmnCtxFcZ8mZDF-c&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) | [TOLED_test](https://drive.google.com/open?id=1-yT5qbtq_PO37XjDNAcXicFHL9SKwc7E&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) |
+| Simulated POLED | [Sim_train](https://drive.google.com/open?id=1ypjm3aGBkHDuX4v1918bifRLMaRMlXba&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)   | [Sim_val](https://drive.google.com/open?id=1fCjccclAjXLUsCc_wNDqn0jCi53faVB0&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)   | NA           |
+| Simulated TOLED | [Sim_train](https://drive.google.com/open?id=1ypjm3aGBkHDuX4v1918bifRLMaRMlXba&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)   | [Sim_val](https://drive.google.com/open?id=1fCjccclAjXLUsCc_wNDqn0jCi53faVB0&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)   | NA           |
 
 Download the required folder and place it under the `data/` directory. The train and val splits contain both low-quality measurements (`LQ` folder) and high-quality groudtruth (`HQ` folder). The test set contains only measurements currently.
 
-We also provide our simulated dataset, based on training a shallow version of DAGF with CoBi loss.
+We also provide our simulated dataset, based on training a shallow version of DAGF with [Contextual Bilateral (CoBi)](https://ceciliavision.github.io/project-pages/project-zoom.html) loss. For simulation specific details (procedure etc.) take a look at the [experiments](https://github.com/varun19299/deep-atrous-guided-filter/tree/experiments) branch.
 
 ## Configs and Checkpoints
 
@@ -45,6 +51,15 @@ python train{val}.py with config_name {other flags} -p
 ```
 
 Various configs available:
+
+| Model      | Dataset                          | Config Name      | Checkpoints          |
+|------------|----------------------------------|------------------|----------------------|
+| DAGF       | POLED                            | ours_poled       | [ours-poled](https://drive.google.com/open?id=1FYtOhVx2Hni1nfTe4K-hYFwLvJSZjglw&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)       |
+| DAGF-sim   | Simulated POLED                  | ours_poled_sim   | [ours-poled-sim](https://drive.google.com/open?id=1Fa4vB7BtCzDqgxFd0fWZoObZL_bc0Dor&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)   |
+| DAGF-PreTr | POLED (fine-tuned from DAGF-sim) | ours_poled_PreTr | [ours-poled-PreTr](https://drive.google.com/open?id=1FeT-UOR97_iaz_Ed9CxwXpQ545191FZk&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) |
+| DAGF       | TOLED                            | ours_toled       | [ours-toled](https://drive.google.com/open?id=1FZjAploCQNN5L7ngoZVHiFl6edARyoeH&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)       |
+| DAGF-sim   | Simulated TOLED                  | ours_toled_sim   | [ours-toled-sim](https://drive.google.com/open?id=1Fcydhd346CSPb2vEWc1V2uU7dMFtSN3K&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs)   |
+| DAGF-PreTr | TOLED (fine-tuned from DAGF-sim) | ours_toled_PreTr | [ours-toled-PreTr](https://drive.google.com/open?id=1FgsHTUHl6oZBQuGp3eU48JNdtUEiyuAS&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) |
 
 Download the required checkpoint folder and place it under `ckpts/`. 
 
@@ -84,17 +99,9 @@ Splits:
 
 ```shell
 outputs
-|-- guided-filter-l1-tanh-pixelshuffle
+|-- ours-poled
 |   |-- test_latest
-|   |-- test_latest_self_ensemble
 |   |-- val_latest
-|   `-- val_latest_self_ensemble
-|-- guided-filter-l1-tanh-pixelshuffle-5x5
-|   |-- test_latest
-    |   |-- 9.png
-    |   |-- readme.txt
-    |   `-- results.mat
-|   `-- val_latest
         |-- 99.png
         |-- 9.png
         `-- metrics.txt
@@ -104,12 +111,7 @@ outputs
 
 ```shell
 ckpts
-|-- guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-ECA
-|   |-- Epoch_126_model_latest.pth
-|   |-- Epoch_190_model_latest.pth
-|   |-- Epoch_62_model_latest.pth
-|   `-- model_latest.pth
-|-- guided-filter-l1-tanh-pixelshuffle-gca-5x5-improved-FFA
+|-- ours-poled
 |   `-- model_latest.pth
 ```
 
@@ -117,10 +119,8 @@ ckpts
 
 ```shell
 runs
-|-- guided-filter-l1-tanh-pixelshuffle
-|   |-- events.out.tfevents.1592369530.jarvis.26208.0
-|-- guided-filter-l1-tanh-pixelshuffle-5x5
-|   |-- events.out.tfevents.1592719979.jarvis.37079.0
+|-- ours-poled
+|   |-- events.out.tfevents.1592369530.genesis.26208.0
 ```
 
 ## Train Script

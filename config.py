@@ -111,11 +111,11 @@ def base_config():
 
 
 def ours_poled():
-    exp_name = "final-poled"
+    exp_name = "ours-poled"
 
 
 def ours_poled_sim():
-    exp_name = "final-poled-sim"
+    exp_name = "ours-poled-sim"
 
     num_epochs = 16 + 32 + 64
     log_interval = 25
@@ -135,12 +135,12 @@ def ours_poled_sim():
     test_source_dir = None
 
 
-def ours_poled_sim_actual():
-    exp_name = "final-poled-sim-actual"
+def ours_poled_PreTr():
+    exp_name = "ours-poled-PreTr"
 
 
 def ours_toled():
-    exp_name = "final-toled"
+    exp_name = "ours-toled"
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -157,7 +157,7 @@ def ours_toled():
 
 
 def ours_toled_sim():
-    exp_name = "final-toled-sim"
+    exp_name = "ours-toled-sim"
 
     num_epochs = 16 + 32 + 64
     log_interval = 25
@@ -177,8 +177,8 @@ def ours_toled_sim():
     test_source_dir = None
 
 
-def ours_toled_sim_actual():
-    exp_name = "final-toled-sim-actual"
+def ours_toled_PreTr():
+    exp_name = "ours-toled-PreTr"
 
     # ---------------------------------------------------------------------------- #
     # Data
@@ -197,10 +197,10 @@ def ours_toled_sim_actual():
 named_configs = [
     ours_poled,
     ours_poled_sim,
-    ours_poled_sim_actual,
+    ours_poled_PreTr,
     ours_toled,
     ours_toled_sim,
-    ours_toled_sim_actual,
+    ours_toled_PreTr,
 ]
 
 

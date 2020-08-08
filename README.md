@@ -1,12 +1,54 @@
 # Deep Atrous Guided Filter
 
-Our submission to the ECCV 2020 [Under Display Camera Challenge (UDC)](https://rlq-tod.github.io/challenge2.html).
+Our submission to the [Under Display Camera Challenge (UDC)](https://rlq-tod.github.io/challenge2.html) at ECCV 2020. We placed **2nd** and **5th** on the POLED and TOLED tracks respectively!
 
-## Requirements
+[Project Page] [Paper] [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb)
 
-* python 3.7
+![Method Diagram](figs/fig_2.png)
+
+Official implementation of our ECCVW 2020 paper, "Deep Atrous Guided Filter for Image Restoration in Under Display Cameras",
+[Varun Sundar<sup>*</sup>](mailto:vsundar4@wisc.edu), [Sumanth Hedge<sup>*</sup>](mailto:sumanth@smail.iitm.ac.in), [Divya K Raman](mailto:), [Kaushik Mitra](mailto:kmitra@ee.iitm.ac.in).
+Indian Institute of Technology Madras, * denotes equal contribution.
+
+## Quick Collab Demo
+
+If you want to experiment with Deep Atrous Guided Filter (DAGF), we recommend you get started with the [collab notebook](https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb). It exposes the core aspects of our method, while abstracting away minor details and helper functions.
+
+It requires no prior setup, and contains a demo for both POLED and TOLED measurements.
+
+If you're unfamiliar with Under Display Cameras, they are a new imaging system for smartphones, where the camera is mounted right under the display. This makes truly bezel-free displays possible, and opens up a bunch of other applications. You can read more here.
+
+## Get Started
+
+If you would like to reproduce **all** our experiments presented in the paper, head over to the [experiments](https://github.com/varun19299/deep-atrous-guided-filter/tree/experiments) branch. For a concise version with just our final models, you may continue here.
+
+
+You'll need to install the following:
+
+* python 3.7+
 * pytorch 1.5+
 * Use `pip install -r utils/requirements.txt` for the remaining
+
+## Data
+
+
+Download the required folder and place it under the `data/` directory. The train and val splits contain both low-quality measurements (`LQ` folder) and high-quality groudtruth (`HQ` folder). The test set contains only measurements currently.
+
+We also provide our simulated dataset, based on training a shallow version of DAGF with CoBi loss.
+
+## Configs and Checkpoints
+
+We use [sacred] to handle config parsing, with the following command-line invocation:
+
+```bash
+python train{val}.py with config_name {other flags} -p
+```
+
+Various configs available:
+
+Download the required checkpoint folder and place it under `ckpts/`. 
+
+Further, see `config.py` for exhaustive set of config options. To add a config, create a new function in `config.py and add it to `named_configs`. 
 
 ## Directory Setup
 
@@ -17,7 +59,7 @@ Create the following symbolic links (assume `path_to_root_folder/` is `~/udc_net
 * Ckpts folder: `ln -s /ckpt_dir/ ~/udc_net`
 * Outputs folder: `ln -s /output_dir/ ~/udc_net`
 
-### Organisation 
+### High Level Organisation 
 
 **Data folder**: Each subfolder contains a data split.
 
@@ -81,17 +123,10 @@ runs
 |   |-- events.out.tfevents.1592719979.jarvis.37079.0
 ```
 
-
-## Configs
-
-See `config.py` for exhaustive set of config options. 
-
-Create a new function to overwrite and add it to `named_configs`. 
-
 ## Train Script
 
 Run as:
-`python train.py with xyz_config {system=""} {other flags}`
+`python train.py with xyz_config{other flags}`
 
 For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
 
@@ -104,7 +139,18 @@ Run as:
 
 Useful Flags:
 
-* `save_mat`: Dumps mat file in `outputs/args.exp_name/test_latest/`. Used for submitting to CodeLabs.
 * `self_ensemble`: Use self-ensembling. Ops may be found in `utils/self_ensembling.py`.
 
 See config.py for exhaustive set of arguments (under `base_config`).
+
+## Citation
+
+If you find our work useful in your research, please cite:
+
+```
+
+```
+
+## Contact
+
+Feel free to mail us if you have any questions!

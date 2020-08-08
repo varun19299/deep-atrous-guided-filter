@@ -15,6 +15,9 @@ ex = initialise(ex)
 
 
 class ConvGuidedFilter(nn.Module):
+    """
+    Adapted from https://github.com/wuhuikai/DeepGuidedFilter
+    """
     def __init__(self, radius=1, norm=nn.BatchNorm2d, conv_a_kernel_size: int = 1):
         super(ConvGuidedFilter, self).__init__()
 

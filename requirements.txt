@@ -12,4 +12,3 @@ torchsummary
 common
 pytorch-msssim
 git+https://github.com/S-aiueo32/contextual_loss_pytorch.git
-git+https://github.com/S-aiueo32/lpips-pytorch.git

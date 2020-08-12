@@ -9,5 +9,5 @@ ckpts/*
 data/*
 
 .idea/*
-Icon
-*/Icon
+Icon*
+*/Icon*

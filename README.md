@@ -7,7 +7,7 @@ Our submission to the [Under Display Camera Challenge (UDC)](https://rlq-tod.git
 ![Method Diagram](figs/fig_2.png)
 
 Official implementation of our ECCVW 2020 paper, "Deep Atrous Guided Filter for Image Restoration in Under Display Cameras",
-[Varun Sundar<sup>*</sup>](mailto:vsundar4@wisc.edu), [Sumanth Hedge<sup>*</sup>](mailto:sumanth@smail.iitm.ac.in), [Divya K Raman](mailto:), [Kaushik Mitra](mailto:kmitra@ee.iitm.ac.in).
+[Varun Sundar<sup>*</sup>](mailto:vsundar4@wisc.edu), [Sumanth Hedge<sup>*</sup>](mailto:sumanth@smail.iitm.ac.in), [Divya K Raman](mailto:ee15b085@smail.iitm.ac.in), [Kaushik Mitra](mailto:kmitra@ee.iitm.ac.in).
 Indian Institute of Technology Madras, * denotes equal contribution.
 
 ## Quick Collab Demo

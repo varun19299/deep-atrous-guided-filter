@@ -54,6 +54,8 @@ def base_config():
     stride_height = crop_height
     stride_width = crop_width
 
+    use_median_filter = False
+    median_filter_kernel = (5, 5)
     # ---------------------------------------------------------------------------- #
     # Train Configs
     # ---------------------------------------------------------------------------- #

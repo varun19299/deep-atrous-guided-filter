@@ -8,6 +8,7 @@ from collections import defaultdict
 import numpy as np
 import logging
 import cv2
+import kornia
 
 # Torch Libs
 import torch
@@ -68,6 +69,7 @@ def forward_img(G, source, args):
                     source_rolled, args.crop_height, args.crop_width
                 )
                 output_chopped = G(source_chopped)
+
                 output = unchop_patches(
                     output_chopped, args.image_height, args.image_width, n=n
                 )
@@ -81,6 +83,11 @@ def forward_img(G, source, args):
         output = torch.cat(output_ll, dim=0).mean(dim=0, keepdim=True)
     else:
         output = G(source)
+
+    if args.use_median_filter:
+        output = kornia.filters.median_blur(
+            output, kernel_size=args.median_filter_kernel
+        )
 
     return output
 
@@ -120,6 +127,11 @@ def evaluate_model(G, data, lpips_criterion, device, args):
         train_path = train_path.parent / f"{train_path.name}_self_ensemble"
         val_path = val_path.parent / f"{val_path.name}_self_ensemble"
         test_path = test_path.parent / f"{test_path.name}_self_ensemble"
+
+    if args.use_median_filter:
+        train_path = train_path.parent / f"{train_path.name}_median_filter"
+        val_path = val_path.parent / f"{val_path.name}_median_filter"
+        test_path = test_path.parent / f"{test_path.name}_median_filter"
 
     train_path.mkdir(exist_ok=True, parents=True)
     val_path.mkdir(exist_ok=True, parents=True)
@@ -555,12 +567,8 @@ def main(_run):
         ensembled_test_mat = []
 
         # ensemble paths
-        ensemble_val_path = (
-            args.output_dir / f"val_model_ensemble_{epoch_list}"
-        )
-        ensemble_test_path = (
-            args.output_dir / f"test_model_ensemble_{epoch_list}"
-        )
+        ensemble_val_path = args.output_dir / f"val_model_ensemble_{epoch_list}"
+        ensemble_test_path = args.output_dir / f"test_model_ensemble_{epoch_list}"
 
         if args.self_ensemble:
             ensemble_val_path = (

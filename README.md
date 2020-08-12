@@ -2,7 +2,7 @@
 
 Our submission to the [Under Display Camera Challenge (UDC)](https://rlq-tod.github.io/challenge2.html) at ECCV 2020. We placed **2nd** and **5th** on the POLED and TOLED tracks respectively!
 
-[Project Page](varun19299.github.io/deep-atrous-guided-filter/) [Paper] [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb)
+[Project Page](https://varun19299.github.io/deep-atrous-guided-filter/) [Paper] [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb)
 
 ![Method Diagram](figs/fig_2.png)
 

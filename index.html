@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>Deep Atrous Guided Filter</title>
+
+    <meta name="description" content="Deep Atrous Guided Filter">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- <base href="/"> -->
+
+    <!--FACEBOOK-->
+    <meta property="og:image" content="img/restoration.png">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="512">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://varun19299.github.io/deep-atrous-guided-filter" />
+    <meta property="og:title" content="Deep Atrous Guided Filter" />
+    <meta property="og:description"
+        content="Project page for Deep Atrous Guided Filter for Image Restoration in Under Display Cameras." />
+
+    <!--TWITTER-->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Deep Atrous Guided Filter" />
+    <meta name="twitter:description"
+        content="Project page for Deep Atrous Guided Filter for Image Restoration in Under Display Cameras." />
+    <meta name="twitter:image" content="img/restoration.png" />
+
+
+    <!--     <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
+    <link rel="icon" type="image/png" href="img/restoration.png">
+    <!-- Place favicon.ico in the root directory -->
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.css">
+    <link rel="stylesheet" href="css/app.css">
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-175460063-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-175460063-1');
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.3/clipboard.min.js"></script>
+
+    <script src="js/app.js"></script>
+</head>
+
+<body>
+    <div class="container" id="main">
+        <div class="row">
+            <h2 class="col-md-12 text-center">
+                Deep Atrous Guided Filter <br>
+                for Image Restoration in Under Display Cameras</br>
+                <!--                 <small>
+                    arXiv 2020
+                </small> -->
+            </h2>
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <ul class="list-inline">
+                    <li>
+                        <a href="https://github.com/varun19299">
+                            Varun Sundar*
+                        </a>
+                        <!-- </br>UW Madison -->
+                    </li>
+                    <li>
+                        <a href="https://github.com/SumanthRH">
+                            Sumanth Hedge*
+                        </a>
+                        <!-- </br>IIT Madras -->
+                    </li>
+                    <li>
+                        <a href="https://github.com/divyakraman">
+                            Divya K Raman
+                        </a>
+                        <!-- </br>UMD -->
+                    </li>
+                    <li>
+                        <a href="http://www.ee.iitm.ac.in/kmitra/">
+                            Kaushik Mitra
+                        </a>
+                        <!-- </br>IIT Madras -->
+                    </li>
+                    </br> IIT Madras
+                </ul>
+
+                *denotes equal contribution
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-md-4 col-md-offset-4 text-center">
+                <ul class="nav nav-pills nav-justified">
+                    <li>
+                        <a href="">
+                            <image src="img/ff_paper_image.png" height="60px">
+                                <h4><strong>Paper</strong></h4>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/varun19299/deep-atrous-guided-filter">
+                            <image src="img/github.png" height="60px">
+                                <h4><strong>Code</strong></h4>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb">
+                            <image src="img/colab_favicon_256px.png" height="60px">
+                                <h4><strong>Collab</strong></h4>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://drive.google.com/drive/folders/1-2NDQXTZvPaoHIjVRobgENlW1qocbRZX?usp=sharing">
+                            <image src="img/dataset.png" height="60px">
+                                <h4><strong>Dataset</strong></h4>
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+
+
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Abstract & Method
+                </h3>
+                <image src="img/fig_1.pdf" class="img-responsive" alt="overview"><br>
+                    <p class="text-justify">
+                        <a href="https://yzhouas.github.io/projects/UDC/udc.html">Under Display Cameras (UDC)</a>
+                        present a
+                        promising opportunity for phone manufacturers to achieve
+                        bezel-free displays by positioning the camera behind semi-transparent OLED screens.
+                        Unfortunately, such imaging systems suffer from severe image degradation due to light
+                        attenuation and diffraction effects. <br />
+                    </p>
+
+                    <br />
+
+                    <figure>
+                        <image src="img/fig_2.pdf" class="img-responsive" onmouseover="this.src='img/fig_2_hover.pdf'"
+                            onmouseout="this.src='img/fig_2.pdf'" alt="" />
+                        <figcaption><b>Method overview:</b> Hover mouse pointer to see details.</figcaption>
+                    </figure>
+                    <p class="text-justify">
+                        <br /> In this work, we present <b>Deep Atrous Guided Filter (DAGF)</b>,
+                        a two-stage, end-to-end approach for image restoration in UDC systems. A Low-Resolution
+                        Network (LRNet)
+                        first restores image quality at low-resolution, which is subsequently used by the Guided
+                        Filter
+                        Network as a filtering input to produce a high-resolution output. Besides the initial
+                        downsampling, our low-resolution network uses multiple, parallel atrous convolutions to
+                        preserve
+                        spatial resolution and emulates multi-scale processing. <br />
+
+                        <br /> Our approach's ability to directly train
+                        on megapixel images results in significant performance improvement. We additionally propose
+                        a
+                        simple simulation scheme to pre-train our model and boost performance. Our overall framework
+                        ranks 2nd and 5th in the <a href="https://rlq-tod.github.io/challenge2.html">RLQ-TOD'20 UDC
+                            Challenge</a> for POLED and TOLED displays,
+                        respectively.
+                    </p>
+            </div>
+        </div>
+
+
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Key Contributions
+                </h3>
+                <ul>
+                    <li>Our approach, <b>DAGF</b>, uses a novel combination of atrous convolutions in conjunction with a
+                        trainable guided filter framework, and is capable of directly training on megapixel images.</li>
+                    <li>We show that directly training on megapixel inputs provides DAGF with superior context
+                        information, allowing us to significantly
+                        outperform existing methods. This is particularly evident on the severely degraded POLED
+                        measurements.</li>
+                    <li>Availability of sufficient data is often a constraining factor when designing learning-based
+                        restoration methods in imaging systems. We propose a simple simulation scheme to pre-train our
+                        model and further boost performance.</li>
+                </ul>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Simulation Procedure
+                </h3>
+                <figure>
+                    <image src="img/fig_7_sim.pdf" class="img-responsive" alt="overview">
+                        <figcaption><b>Some simulated outputs.</b> Notice how closely the simulated measurements
+                            resemble real ones.
+                        </figcaption>
+                </figure>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>Results </h3>
+                <figure>
+                    <image src="img/fig_5_poled.pdf" class="img-responsive" alt="overview">
+                        <figcaption><b>Qualitative comparison on POLED measurements.</b>
+                        </figcaption>
+                </figure>
+                <br>
+                <figure>
+                    <image src="img/fig_6_toled.pdf" class="img-responsive" alt="overview">
+                        <figcaption><b>Qualitative comparison on TOLED measurements.</b>
+                        </figcaption>
+                </figure>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Talk at RLQ Workshop, ECCV 2020
+                </h3>
+
+                Will be updated soon.
+                <!-- <p align="center">
+                    <iframe width="400" height="267" src="" frameborder="0" allow="autoplay; encrypted-media"
+                        allowfullscreen align="center"></iframe></p> -->
+
+                <br>
+                <!-- <table align=center width=800px>
+                    <br>
+                    <tr>
+                        <center>
+                            <span style="font-size:22px">&nbsp;<a
+                                    href='https://www.dropbox.com/s/bzo8kia5si811tm/antialiasing_bair.pptx?dl=0'>[Slides]</a>
+                </table> -->
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Citation
+                </h3>
+                <!-- <div class="form-group col-md-10 col-md-offset-1">
+                    <textarea id="bibtex" class="form-control" readonly>
+@article{tancik2020fourierfeat,
+    title={Fourier Features Let Networks Learn High Frequency Functions in Low Dimensional Domains},
+    author={Matthew Tancik and Pratul P. Srinivasan and Ben Mildenhall and Sara Fridovich-Keil and Nithin Raghavan and Utkarsh Singhal and Ravi Ramamoorthi and Jonathan T. Barron and Ren Ng},
+    journal={arXiv preprint arXiv:2006.10739},
+    year={2020}
+}</textarea>
+                </div> -->
+                Openaccess version will be updated soon.
+
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>
+                    Acknowledgements
+                </h3>
+                <p class="text-justify">
+                    We are grateful to <a href="https://scholar.google.co.in/citations?user=_E5JqWIAAAAJ&hl=en">Prasan
+                        Shedligiri</a>, <a href="https://siddiquesalman.github.io">Salman Siddique</a>
+                    and <a href="https://scholar.google.com/citations?user=f5Ot7kcAAAAJ&hl=en">Mohit Lamba</a> from the
+                    Computational Imaging
+                    Lab at IIT Madras for providing valuable feedback. We would also like to thank <a
+                        href="https://www.genesiscloud.com">Genesis Cloud</a> for
+                    providing additional compute hours. <br>
+                    <br /> This website template was borrowed from <a href="http://mgharbi.com/">Michaël Gharbi</a> and
+                    <a href="https://www.matthewtancik.com">Matthew Tannick</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

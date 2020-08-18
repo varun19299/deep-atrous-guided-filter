@@ -2,7 +2,7 @@
 
 Our submission to the [Under Display Camera Challenge (UDC)](https://rlq-tod.github.io/challenge2.html) at ECCV 2020. We placed **2nd** and **5th** on the POLED and TOLED tracks respectively!
 
-[Project Page](https://varun19299.github.io/deep-atrous-guided-filter/) [Paper](https://arxiv.org/abs/2008.06229) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb)
+[Project Page](https://varun19299.github.io/deep-atrous-guided-filter/) | [Paper](https://arxiv.org/abs/2008.06229) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/varun19299/deep-atrous-guided-filter/blob/master/demo_DAGF.ipynb)
 
 ![Method Diagram](figs/fig_2.png)
 
@@ -148,8 +148,17 @@ See config.py for exhaustive set of arguments (under `base_config`).
 If you find our work useful in your research, please cite:
 
 ```
-
+@misc{sundar2020deep,
+title={Deep Atrous Guided Filter for Image Restoration in Under Display Cameras},
+author={Varun Sundar and Sumanth Hegde and Divya Kothandaraman and Kaushik Mitra},
+year={2020},
+eprint={2008.06229},
+archivePrefix={arXiv},
+primaryClass={cs.CV}
+}
 ```
+
+Openaccess version will be updated soon.
 
 ## Contact
 

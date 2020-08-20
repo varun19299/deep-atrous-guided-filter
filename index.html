@@ -161,7 +161,7 @@
                     <figure>
                         <image src="img/fig_2.pdf" class="img-responsive" onmouseover="this.src='img/fig_2_hover.pdf'"
                             onmouseout="this.src='img/fig_2.pdf'" alt="" />
-                        <figcaption><b>Method overview:</b> Hover mouse pointer to see details.</figcaption>
+                        <figcaption><b>Method overview.</b> Hover mouse pointer to see details.</figcaption>
                     </figure>
                     <p class="text-justify">
                         <br /> In this work, we present <b>Deep Atrous Guided Filter (DAGF)</b>,
@@ -178,7 +178,8 @@
                         on megapixel images results in significant performance improvement. We additionally propose
                         a
                         simple simulation scheme to pre-train our model and boost performance. Our overall framework
-                        ranks 2nd and 5th in the <a href="https://rlq-tod.github.io/challenge2.html">RLQ-TOD'20 UDC
+                        ranks <b>2nd and 5th</b> in the <a href="https://rlq-tod.github.io/challenge2.html">RLQ-TOD'20
+                            UDC
                             Challenge</a> for POLED and TOLED displays,
                         respectively.
                     </p>
@@ -192,6 +193,7 @@
                 <h3>
                     Key Contributions
                 </h3>
+                <br />
                 <ul>
                     <li>Our approach, <b>DAGF</b>, uses a novel combination of atrous convolutions in conjunction with a
                         trainable guided filter framework, and is capable of directly training on megapixel images.</li>
@@ -218,6 +220,19 @@
                             resemble real ones.
                         </figcaption>
                 </figure>
+                <p class="text-justify">
+                    <br /> Availability of data, even with clever schemes like <a
+                        href="https://arxiv.org/abs/2003.04857">monitor acquisition</a>, can be a constraining
+                    factor
+                    while designing learning based approaches in imaging pipelines. Instead, we propose a simple
+                    simulation scheme to cheaply generate training data.<br />
+
+                    <br />We train a shallow version of DAGF to transform clean <a
+                        href="https://data.vision.ee.ethz.ch/cvl/DIV2K/">DIV2K images</a> to various display
+                    measurements
+                    (glass, POLED or TOLED). We use this data to pre-train DAGF, which provides us a performance boost
+                    of 0.3 to 0.5 dB in PSNR. See our paper for more details.
+                </p>
             </div>
         </div>
 
@@ -229,12 +244,32 @@
                         <figcaption><b>Qualitative comparison on POLED measurements.</b>
                         </figcaption>
                 </figure>
-                <br>
+                <p class="text-justify">
+                    <br>
+                    DAGF's ability to directly train on megapixel images and hence aggregate contextual information
+                    over large receptive fields leads to a superior restoration. </br>
+
+                    </br>We show significant improvement over
+                    exisitng state-of-the-art
+                    image-restoration methods, which are designed for tasks such as deraining, dehazing and image
+                    transformation. Such methods lack sufficient input context for a challenging scenario such as
+                    UDC.</br>
+
+
+                    </br>This is more evident on the POLED
+                    dataset, where line, colour and blur artefacts can be seen in the baselines.</br>
+                </p>
+
                 <figure>
                     <image src="img/fig_6_toled.pdf" class="img-responsive" alt="overview">
                         <figcaption><b>Qualitative comparison on TOLED measurements.</b>
                         </figcaption>
                 </figure>
+
+                <p class="text-justify">
+                    <br> The baselines perform better on the moderatly degraded TOLED measurements, but DAGF still
+                    surpasses them visually and metric-wise.
+                </p>
             </div>
         </div>
 
@@ -266,8 +301,9 @@
                 <h3>
                     Citation
                 </h3>
+                <br />
                 <div class="form-group col-md-10 col-md-offset-1">
-                    <textarea id="bibtex" class="form-control" rows="8" readonly>
+                    <textarea id="bibtex" class="form-control" rows="9" readonly>
 @misc{sundar2020deep,
 title={Deep Atrous Guided Filter for Image Restoration in Under Display Cameras},
 author={Varun Sundar and Sumanth Hegde and Divya Kothandaraman and Kaushik Mitra},

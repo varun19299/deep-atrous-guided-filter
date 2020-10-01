@@ -88,6 +88,16 @@ See `config.py` for exhaustive set of config options.
 
 Create a new function to overwrite and add it to `named_configs`. 
 
+## Simulation Networks
+
+We include the checkpoints corresponding to the simulation networks here. For more details, please refer to our [paper](https://arxiv.org/abs/2008.06229).
+
+| Model          | Config                                           | Checkpoint                                                                                                                  |
+|----------------|--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| Clean to Glass | guided_filter_l1_tanh_pixelshuffle_forward_glass | [clean2glass](https://drive.google.com/open?id=1N51EA3xg4vXq2o2OfF3_HvH2f9WBfb-6&authuser=vsundar4%40wisc.edu&usp=drive_fs) |
+| Clean to POLED | guided_filter_l1_tanh_pixelshuffle_forward_poled | [clean2poled](https://drive.google.com/open?id=1HRO6I2fn0lgUL15dk3mCODEf_yBkre0b&authuser=vsundar4%40wisc.edu&usp=drive_fs) |
+| Clean to TOLED | guided_filter_l1_tanh_pixelshuffle_forward_toled | [clean2toled](https://drive.google.com/open?id=18lV5VxwRf7u0v0ZNE7Xc-YCQiotSsYIz&authuser=vsundar4%40wisc.edu&usp=drive_fs) |
+
 ## Train Script
 
 Run as:

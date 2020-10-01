@@ -44,7 +44,7 @@ We also provide our simulated dataset, based on training a shallow version of DA
 
 ## Configs and Checkpoints
 
-We use [sacred] to handle config parsing, with the following command-line invocation:
+We use [sacred](https://sacred.readthedocs.io) to handle config parsing, with the following command-line invocation:
 
 ```bash
 python train{val}.py with config_name {other flags} -p
@@ -62,6 +62,8 @@ Various configs available:
 | DAGF-PreTr | TOLED (fine-tuned from DAGF-sim) | ours_toled_PreTr | [ours-toled-PreTr](https://drive.google.com/open?id=1FgsHTUHl6oZBQuGp3eU48JNdtUEiyuAS&authuser=ee16b068%40smail.iitm.ac.in&usp=drive_fs) |
 
 Download the required checkpoint folder and place it under `ckpts/`. 
+
+DAGF-sim networks are first trained on simulated data. To obtain this data, we trained a shallow version of our final model to transform clean images to Glass/ POLED / TOLED. You can find the checkpoints and code to these networks in our [experiments](https://github.com/varun19299/deep-atrous-guided-filter/tree/experiments) branch.
 
 Further, see `config.py` for exhaustive set of config options. To add a config, create a new function in `config.py and add it to `named_configs`. 
 

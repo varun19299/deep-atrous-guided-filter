@@ -126,7 +126,7 @@ runs
 ## Train Script
 
 Run as:
-`python train.py with xyz_config{other flags}`
+`python train.py with xyz_config {other flags}`
 
 For a multi-gpu version (we use pytorch's `distributed-data-parallel`):
 

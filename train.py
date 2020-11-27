@@ -23,7 +23,7 @@ import warnings
 from dataloader import get_dataloaders
 from utils.dir_helper import dir_init
 from models import get_model
-from loss import GLoss, DLoss
+from loss import GLoss
 from config import initialise
 from metrics import PSNR
 

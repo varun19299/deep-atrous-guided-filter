@@ -59,8 +59,9 @@ def main(_run):
     G = get_model.model(args).to(device)
 
     # LPIPS Criterion
+    use_gpu  = device != "cpu"
     lpips_criterion = PerceptualLoss(
-        model="net-lin", net="alex", use_gpu=True, gpu_ids=[device]
+        model="net-lin", net="alex", use_gpu=use_gpu, gpu_ids=[device]
     ).to(device)
 
     # Load Models

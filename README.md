@@ -150,17 +150,18 @@ See config.py for exhaustive set of arguments (under `base_config`).
 If you find our work useful in your research, please cite:
 
 ```
-@misc{sundar2020deep,
-title={Deep Atrous Guided Filter for Image Restoration in Under Display Cameras},
-author={Varun Sundar and Sumanth Hegde and Divya Kothandaraman and Kaushik Mitra},
-year={2020},
-eprint={2008.06229},
-archivePrefix={arXiv},
-primaryClass={cs.CV}
+@InProceedings{10.1007/978-3-030-68238-5_29,
+author="Sundar, Varun
+and Hegde, Sumanth
+and Kothandaraman, Divya
+and Mitra, Kaushik",
+title="Deep Atrous Guided Filter for Image Restoration in Under Display Cameras",
+booktitle="Computer Vision -- ECCV 2020 Workshops",
+year="2020",
+publisher="Springer International Publishing",
+pages="379--397",
 }
 ```
-
-Openaccess version will be updated soon.
 
 ## Contact
 
